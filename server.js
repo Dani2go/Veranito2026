@@ -21,11 +21,11 @@ const COLORS = ["teal", "leaf", "ember", "plum", "sun", "sky", "navy"];
 
 const SEED = [
   ["dougalls", "Comida en DouGall's", "🍺", "Comida en la fábrica de cerveza artesana de Liérganes. Tablas, birras de barril y terraza.", "Liérganes", "~30 €/persona (51 € con visita+maridaje)", "teal", "Sara"],
-  ["casapoli", "Casa Poli", "🦞", "Casa de comidas de culto cerca de Llanes. Sin reservas (llegar 13:00), pescado del día y sidra.", "Puertas de Vidiago (Asturias)", "~35 €/persona", "leaf", ""],
+  ["casapoli", "Casa Poli", "🦞", "Casa de comidas de culto cerca de Llanes. Sin reservas (llegar 13:00), pescado del día y sidra.", "Puertas de Vidiago (Asturias)", "~35 €/persona", "leaf", "Daniel"],
   ["barbacoa", "Barbacoa en La Moruca", "🔥", "Barbacoa en mi casa, en Tagle. Carne, hielo y tarde larga.", "Tagle", "bote común ~12 €", "ember", "Marta"],
   ["bbk", "Finde del BBK", "🎧", "Pinchada de Petro y Tony que monta Camilo, coincidiendo con el Bilbao BBK Live.", "Bilbao", "9–11 jul · fecha fija", "plum", "Camilo"],
   ["ramales", "Cuevas de Ramales", "🦌", "Visita a las cuevas de Ramales de la Victoria (Covalanas / Cullalvera): arte rupestre y geología. Reservar la visita guiada.", "Ramales de la Victoria", "entrada ~15 €", "sun", "Alex"],
-  ["snorkel", "Snorkel en Punta Ballota", "🤿", "Snorkel y playa en Punta Ballota, en Suances. Trae gafas y tubo.", "Suances", "gratis", "sky", ""],
+  ["snorkel", "Snorkel en Punta Ballota", "🤿", "Snorkel y playa en Punta Ballota, en Suances. Trae gafas y tubo.", "Suances", "gratis", "sky", "Daniel"],
   ["getaria", "Getaria y noche en Donosti", "🐟", "Homenaje de pescado a la brasa en Getaria y, si apetece, noche de mamoneo por Donosti. Lo de la noche es opcional, pero redondea el plan.", "Getaria (Gipuzkoa)", "comida ~60 € · noche en Donosti aparte", "navy", "Camilo"],
 ];
 
