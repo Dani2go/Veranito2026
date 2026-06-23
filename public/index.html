@@ -159,6 +159,19 @@
     background:var(--sea);color:#fff;padding:11px 18px;border-radius:12px;font-size:.88rem;font-weight:600;
     opacity:0;transition:.25s;z-index:50}
   .toast.show{transform:translateX(-50%);opacity:1}
+  .install{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);
+    border-left:5px solid var(--teal);border-radius:14px;padding:10px 12px;margin:16px 0 0}
+  .install .txt{flex:1;font-size:.84rem;font-weight:600;color:var(--sea);line-height:1.3}
+  .install .go{border:none;background:var(--teal);color:#fff;font-weight:700;border-radius:10px;
+    padding:9px 14px;cursor:pointer;font-family:'Inter';font-size:.86rem;white-space:nowrap}
+  .install .x{border:none;background:transparent;color:var(--muted);font-size:1rem;cursor:pointer;padding:4px 6px}
+  .modal{position:fixed;inset:0;background:rgba(11,62,69,.55);display:flex;align-items:center;justify-content:center;z-index:60;padding:20px}
+  .modal .sheet{background:#fff;border-radius:18px;padding:22px;max-width:360px;width:100%}
+  .modal h3{font-family:'Bricolage Grotesque';color:var(--sea);margin:0 0 12px}
+  .modal ol{margin:0 0 16px;padding-left:20px;font-size:.92rem;line-height:1.6}
+  .modal b{color:var(--sea)}
+  .modal .sheet button{border:none;background:var(--teal);color:#fff;font-weight:700;border-radius:11px;
+    padding:11px 16px;width:100%;cursor:pointer;font-family:'Inter';font-size:.92rem}
   .empty{color:var(--muted);font-size:.9rem;text-align:center;padding:24px 0}
   *:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
   @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -190,6 +203,11 @@
 </header>
 
 <div class="wrap">
+  <div class="install" id="installBar" style="display:none">
+    <span class="txt">📲 Instala PATATUQUENS como app en tu móvil</span>
+    <button class="go" id="installGo">Instalar</button>
+    <button class="x" id="installX" aria-label="Cerrar">✕</button>
+  </div>
   <nav class="tabs">
     <button data-tab="planes" class="active">Planes</button>
     <button data-tab="dispo">Disponibilidad</button>
@@ -252,6 +270,18 @@
       </div>
     </details>
   </section>
+</div>
+
+<div class="modal" id="iosHelp" style="display:none">
+  <div class="sheet">
+    <h3>Instalar en iPhone</h3>
+    <ol>
+      <li>Asegúrate de abrir esta página en <b>Safari</b>.</li>
+      <li>Pulsa el botón <b>Compartir</b> (el cuadrado con la flecha ↑), abajo en la barra.</li>
+      <li>Elige <b>Añadir a pantalla de inicio</b> y pulsa <b>Añadir</b>.</li>
+    </ol>
+    <button id="iosHelpClose">Entendido</button>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -418,6 +448,29 @@ setInterval(load,20000); // refresco suave para ver cambios de los demás
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
 }
+
+// ---- Botón "Instalar app" ----
+let deferredPrompt=null;
+const installBar=document.getElementById('installBar');
+const isStandalone=()=>window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+const isIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent);
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;if(!isStandalone())installBar.style.display='flex';});
+window.addEventListener('appinstalled',()=>{installBar.style.display='none';deferredPrompt=null;});
+document.getElementById('installX').onclick=()=>{installBar.style.display='none';};
+document.getElementById('installGo').onclick=async()=>{
+  if(deferredPrompt){                               // Android / Chrome: instalación directa
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt=null; installBar.style.display='none';
+  }else if(isIOS()){                                // iPhone: mostrar los pasos
+    document.getElementById('iosHelp').style.display='flex';
+  }else{                                            // resto: instrucción genérica
+    toast('Abre el menú del navegador y pulsa "Instalar app" o "Añadir a pantalla de inicio".');
+  }
+};
+document.getElementById('iosHelpClose').onclick=()=>{document.getElementById('iosHelp').style.display='none';};
+// Si no está instalada, muestra el botón (en iPhone no salta beforeinstallprompt, por eso lo forzamos)
+if(!isStandalone()) installBar.style.display='flex';
 </script>
 </body>
 </html>
