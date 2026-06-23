@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Plan de Verano '26 · la cuadrilla</title>
+<title>Plan de Verano '26 · PATATUQUENS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -116,15 +116,16 @@
   .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
   .dow{font-size:.6rem;font-weight:700;color:var(--muted);text-align:center;text-transform:uppercase}
   .day{
-    aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:.8rem;
-    border-radius:9px;cursor:pointer;position:relative;background:#F4EEDD;user-select:none
+    aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    border-radius:10px;cursor:pointer;position:relative;background:#F4EEDD;user-select:none
   }
   .day.pad{visibility:hidden;cursor:default}
-  .day .n{position:relative;z-index:2}
-  .day.mine{background:var(--teal);color:#fff;font-weight:700}
-  .day .cnt{position:absolute;top:2px;right:3px;font-size:.52rem;font-weight:800;color:var(--sun);z-index:2}
-  .day.mine .cnt{color:#fff}
-  .day .heat{position:absolute;inset:0;border-radius:9px;background:var(--sun);z-index:1}
+  .day .heat{position:absolute;inset:0;border-radius:10px;background:var(--sun);z-index:1}
+  .day .dn{position:relative;z-index:2;font-size:.8rem;font-weight:600;line-height:1}
+  .day .cnt{position:relative;z-index:2;font-size:.58rem;font-weight:800;color:#fff;background:#B8690F;
+    border-radius:999px;padding:1px 5px;line-height:1.3;min-width:15px;text-align:center}
+  .day.mine{box-shadow:inset 0 0 0 2.5px var(--teal)}
+  .day.mine .dn{color:var(--teal);font-weight:800}
   .save-bar{position:sticky;bottom:10px;margin-top:16px;display:flex;gap:10px;align-items:center;
     background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;box-shadow:0 8px 24px -16px rgba(0,0,0,.4)}
   .save-bar .info{flex:1;font-size:.82rem;color:var(--muted)}
@@ -159,7 +160,7 @@
 <header>
   <div class="sun"></div>
   <div class="wrap" style="padding:0">
-    <div class="kick">Cantabria · la cuadrilla</div>
+    <div class="kick">Cantabria · PATATUQUENS</div>
     <h1>Plan de verano <em>'26</em></h1>
     <div class="who">
       <select id="name" autocomplete="off">
@@ -214,8 +215,8 @@
     <h2 class="sec-title">¿Cuándo puedes?</h2>
     <p class="sec-sub">Toca los días que te vendrían bien este verano. Los números muestran cuánta gente puede ese día.</p>
     <div class="legend">
-      <span><i style="background:var(--teal)"></i>Tus días</span>
-      <span><i style="background:var(--sun);opacity:.5"></i>Disponibilidad del grupo</span>
+      <span><i style="background:#F4EEDD;box-shadow:inset 0 0 0 2.5px var(--teal)"></i>Tus días</span>
+      <span><i style="background:#B8690F"></i>Personas que pueden ese día</span>
     </div>
     <div class="months" id="months"></div>
     <div class="best" id="best"></div>
@@ -304,7 +305,7 @@ function renderPlans(){
   }).join('');
 }
 async function togglePlan(id){
-  if(!myName())return toast('Escribe tu nombre arriba primero');
+  if(!myName())return toast('Elige tu nombre arriba');
   try{await api(`/api/plans/${id}/toggle`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:myName()})});await load();}
   catch(e){toast(e.message);}
 }
@@ -324,33 +325,35 @@ async function delPlan(id){if(!confirm('¿Borrar esta propuesta?'))return;try{aw
 
 /* ---------- DISPONIBILIDAD ---------- */
 function iso(y,m,d){return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;}
-function counts(){
+function othersCounts(){
   const me=myName();const c={};
   Object.entries(DATA.availability).forEach(([n,days])=>{if(n===me)return;days.forEach(d=>c[d]=(c[d]||0)+1);});
   return c;
 }
+function effCount(s,oth){return (oth[s]||0)+(mine.has(s)?1:0);}
 function renderCalendar(){
-  const cnt=counts();const maxC=Math.max(1,...Object.values(cnt));
+  const oth=othersCounts();
+  let maxC=1;
+  MONTHS.forEach(([y,m])=>{const days=new Date(y,m+1,0).getDate();for(let d=1;d<=days;d++)maxC=Math.max(maxC,effCount(iso(y,m,d),oth));});
   document.getElementById('months').innerHTML=MONTHS.map(([y,m])=>{
     const lead=(new Date(y,m,1).getDay()+6)%7,days=new Date(y,m+1,0).getDate();
     let cells='';for(let i=0;i<lead;i++)cells+=`<div class="day pad"></div>`;
     for(let d=1;d<=days;d++){
-      const s=iso(y,m,d),n=cnt[s]||0,mineSel=mine.has(s);
-      const heat=n?`<span class="heat" style="opacity:${0.12+0.5*(n/maxC)}"></span>`:'';
+      const s=iso(y,m,d),n=effCount(s,oth),mineSel=mine.has(s);
+      const heat=n?`<span class="heat" style="opacity:${(0.16+0.62*(n/maxC)).toFixed(2)}"></span>`:'';
       const badge=n?`<span class="cnt">${n}</span>`:'';
-      cells+=`<div class="day${mineSel?' mine':''}" data-d="${s}" onclick="toggleDay('${s}')">${heat}${badge}<span class="n">${d}</span></div>`;
+      cells+=`<div class="day${mineSel?' mine':''}" data-d="${s}" onclick="toggleDay('${s}')">${heat}<span class="dn">${d}</span>${badge}</div>`;
     }
     return `<div class="month"><h4>${MN[m]}</h4><div class="grid">${DOW.map(x=>`<div class="dow">${x}</div>`).join('')}${cells}</div></div>`;
   }).join('');
-  renderBest(cnt);
-  document.getElementById('dispoInfo').textContent=mine.size?`${mine.size} día${mine.size===1?'':'s'} marcad${mine.size===1?'o':'os'}.`:'Marca tus días y guarda.';
+  renderBest(oth);
+  document.getElementById('dispoInfo').textContent=mine.size?`${mine.size} día${mine.size===1?'':'s'} tuy${mine.size===1?'o':'os'} marcad${mine.size===1?'o':'os'}.`:'Toca tus días y guarda.';
 }
-function toggleDay(s){if(!myName())return toast('Escribe tu nombre arriba primero');mine.has(s)?mine.delete(s):mine.add(s);renderCalendar();}
-function renderBest(cnt){
-  const me=myName();const tot={};
-  Object.entries(DATA.availability).forEach(([n,days])=>days.forEach(d=>tot[d]=(tot[d]||0)+1));
-  if(me)mine.forEach(d=>{}); // los tuyos sin guardar no cuentan hasta guardar
-  const top=Object.entries(tot).sort((a,b)=>b[1]-a[1]).slice(0,5);
+function toggleDay(s){if(!myName())return toast('Elige tu nombre arriba');mine.has(s)?mine.delete(s):mine.add(s);renderCalendar();}
+function renderBest(oth){
+  const tot={};
+  MONTHS.forEach(([y,m])=>{const days=new Date(y,m+1,0).getDate();for(let d=1;d<=days;d++){const s=iso(y,m,d),n=effCount(s,oth);if(n)tot[s]=n;}});
+  const top=Object.entries(tot).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).slice(0,5);
   const b=document.getElementById('best');
   if(!top.length){b.innerHTML='';return;}
   b.innerHTML=`<h4>Días con más gente</h4><ol>${top.map(([d,n])=>{
@@ -359,7 +362,7 @@ function renderBest(cnt){
   }).join('')}</ol>`;
 }
 async function saveDispo(){
-  if(!myName())return toast('Escribe tu nombre arriba primero');
+  if(!myName())return toast('Elige tu nombre arriba');
   try{await api('/api/availability',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:myName(),days:[...mine]})});
     toast('Disponibilidad guardada');await load();}
   catch(e){toast(e.message);}
@@ -386,7 +389,7 @@ function renderPolls(){
     </div>`;
   }).join('');
 }
-async function vote(oid){if(!myName())return toast('Escribe tu nombre arriba primero');try{await api(`/api/options/${oid}/vote`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:myName()})});await load();}catch(e){toast(e.message);}}
+async function vote(oid){if(!myName())return toast('Elige tu nombre arriba');try{await api(`/api/options/${oid}/vote`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:myName()})});await load();}catch(e){toast(e.message);}}
 function addOptField(){const i=document.createElement('input');i.className='optIn';i.placeholder='Otra opción';i.maxLength=80;i.style.marginTop='8px';document.getElementById('optWrap').appendChild(i);}
 async function addPoll(){
   const question=document.getElementById('qText').value.trim();
