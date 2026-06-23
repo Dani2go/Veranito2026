@@ -10,7 +10,7 @@
 <style>
   :root{
     --sea:#0B3E45; --teal:#1F9E96; --leaf:#5AA06B; --ember:#E4572E;
-    --plum:#7D5BA6; --sun:#D8922B; --sky:#2E8FB0;
+    --plum:#7D5BA6; --sun:#D8922B; --sky:#2E8FB0; --navy:#3D5A80;
     --sand:#FBF3E2; --card:#FFFFFF; --ink:#16302E; --muted:#62756F; --line:#E7E0CE;
   }
   *{box-sizing:border-box}
@@ -32,11 +32,16 @@
   h1{font-family:'Bricolage Grotesque';font-weight:800;font-size:clamp(2rem,8vw,2.8rem);line-height:.92;margin:6px 0 0;position:relative}
   h1 em{font-style:normal;color:#F6B53C}
   .who{display:flex;gap:8px;align-items:center;margin-top:16px;position:relative}
-  .who input{
+  .who input,.who select{
     flex:1;border:none;border-radius:12px;padding:11px 13px;font-family:'Inter';font-size:.95rem;
-    background:rgba(255,255,255,.95);color:var(--ink)
+    background:rgba(255,255,255,.95);color:var(--ink);min-width:0
   }
-  .who input:focus{outline:2px solid #F6B53C}
+  .who input:focus,.who select:focus{outline:2px solid #F6B53C}
+  .who select{
+    -webkit-appearance:none;appearance:none;cursor:pointer;padding-right:34px;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%230B3E45' stroke-width='1.7' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 13px center
+  }
   .who span{font-size:.78rem;color:#BFE9E4;white-space:nowrap}
 
   /* tabs */
@@ -65,6 +70,7 @@
   .plan[data-c=plum]{--c:var(--plum);--cl:#EFEAF7}
   .plan[data-c=sun]{--c:var(--sun);--cl:#F8EDD6}
   .plan[data-c=sky]{--c:var(--sky);--cl:#E1F0F5}
+  .plan[data-c=navy]{--c:var(--navy);--cl:#E3E9F1}
   .plan .head{display:flex;gap:12px;align-items:flex-start}
   .plan .emoji{font-size:1.8rem;line-height:1}
   .plan h3{font-family:'Bricolage Grotesque';font-weight:700;font-size:1.2rem;color:var(--sea);margin:0;flex:1}
@@ -156,7 +162,19 @@
     <div class="kick">Cantabria · la cuadrilla</div>
     <h1>Plan de verano <em>'26</em></h1>
     <div class="who">
-      <input id="name" type="text" placeholder="Tu nombre (para apuntarte y votar)" maxlength="40" autocomplete="name">
+      <select id="name" autocomplete="off">
+        <option value="" disabled selected>Elige tu nombre</option>
+        <option>Daniel</option>
+        <option>Marta</option>
+        <option>Eva</option>
+        <option>Camilo</option>
+        <option>Pablo</option>
+        <option>Sara</option>
+        <option>Nacho</option>
+        <option>Alex</option>
+        <option>Julia</option>
+        <option>Barbero</option>
+      </select>
       <span id="whoHint"></span>
     </div>
   </div>
@@ -237,7 +255,7 @@ let DATA={plans:[],availability:{},polls:[]};
 let mine=new Set();           // mis días seleccionados (sin guardar)
 const nameEl=document.getElementById('name');
 nameEl.value=localStorage.getItem('pv_name')||'';
-nameEl.addEventListener('input',()=>{localStorage.setItem('pv_name',nameEl.value.trim());updateHint();});
+nameEl.addEventListener('change',()=>{localStorage.setItem('pv_name',nameEl.value);updateHint();load();});
 function myName(){return (nameEl.value||'').trim();}
 function updateHint(){document.getElementById('whoHint').textContent=myName()?('Hola, '+myName()):'';}
 
@@ -276,7 +294,7 @@ function renderPlans(){
       </div>
       ${ppl}
       <div class="foot">
-        <span class="count">${p.signups.length} apuntad${p.signups.length===1?'o/a':'os/as'}${!p.fixed&&p.created_by?' · propuesto por '+esc(p.created_by):''}</span>
+        <span class="count">${p.signups.length} apuntad${p.signups.length===1?'o/a':'os/as'}${p.created_by?' · propuesto por '+esc(p.created_by):''}</span>
         <span>
           ${!p.fixed?`<button class="del" onclick="delPlan(${p.id})">borrar</button> `:''}
           <button class="btn ${joined?'out':''}" onclick="togglePlan(${p.id})">${joined?'✓ Apuntado':'Apuntarme'}</button>
