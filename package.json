@@ -1,0 +1,17 @@
+{
+  "name": "plan-verano-cuadrilla",
+  "version": "1.0.0",
+  "description": "App para organizar los planes de verano de la cuadrilla: disponibilidad, propuestas, apuntarse y votaciones.",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "pg": "^8.12.0"
+  }
+}

@@ -1,0 +1,261 @@
+const express = require("express");
+const path = require("path");
+const { Pool } = require("pg");
+
+const app = express();
+app.use(express.json({ limit: "200kb" }));
+app.use(express.static(path.join(__dirname, "public")));
+
+// ---------- Base de datos ----------
+const url = process.env.DATABASE_URL;
+if (!url) {
+  console.error("Falta DATABASE_URL. Añade el plugin de PostgreSQL en Railway y enlaza la variable.");
+}
+const needsSsl = url && !url.includes("railway.internal") && !url.includes("localhost") && !url.includes("127.0.0.1");
+const pool = new Pool({
+  connectionString: url,
+  ssl: needsSsl ? { rejectUnauthorized: false } : false,
+});
+
+const COLORS = ["teal", "leaf", "ember", "plum", "sun", "sky"];
+
+const SEED = [
+  ["dougalls", "Comida en DouGall's", "🍺", "Comida en la fábrica de cerveza artesana de Liérganes. Tablas, birras de barril y terraza.", "Liérganes", "~30 €/persona (51 € con visita+maridaje)", "teal"],
+  ["casapoli", "Casa Poli", "🦞", "Casa de comidas de culto cerca de Llanes. Sin reservas (llegar 13:00), pescado del día y sidra.", "Puertas de Vidiago (Asturias)", "~35 €/persona", "leaf"],
+  ["barbacoa", "Barbacoa en La Moruca", "🔥", "Barbacoa en mi casa, en Tagle. Carne, hielo y tarde larga.", "Tagle", "bote común ~12 €", "ember"],
+  ["bbk", "Finde del BBK", "🎧", "Pinchada de Petro y Tony que monta Camilo, coincidiendo con el Bilbao BBK Live.", "Bilbao", "9–11 jul · fecha fija", "plum"],
+  ["ramales", "Cuevas de Ramales", "🦌", "Visita a las cuevas de Ramales de la Victoria (Covalanas / Cullalvera): arte rupestre y geología. Reservar la visita guiada.", "Ramales de la Victoria", "entrada ~5 €", "sun"],
+  ["snorkel", "Snorkel en Punta Ballota", "🤿", "Snorkel y playa en Punta Ballota, en Suances. Trae gafas y tubo.", "Suances", "gratis", "sky"],
+];
+
+async function init() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS plans (
+      id SERIAL PRIMARY KEY,
+      slug TEXT UNIQUE,
+      title TEXT NOT NULL,
+      emoji TEXT DEFAULT '📍',
+      description TEXT DEFAULT '',
+      location TEXT DEFAULT '',
+      price TEXT DEFAULT '',
+      color TEXT DEFAULT 'teal',
+      fixed BOOLEAN DEFAULT false,
+      created_by TEXT DEFAULT '',
+      created_at TIMESTAMPTZ DEFAULT now()
+    );
+    CREATE TABLE IF NOT EXISTS signups (
+      id SERIAL PRIMARY KEY,
+      plan_id INTEGER REFERENCES plans(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      UNIQUE(plan_id, name)
+    );
+    CREATE TABLE IF NOT EXISTS availability (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      day DATE NOT NULL,
+      UNIQUE(name, day)
+    );
+    CREATE TABLE IF NOT EXISTS polls (
+      id SERIAL PRIMARY KEY,
+      question TEXT NOT NULL,
+      created_by TEXT DEFAULT '',
+      created_at TIMESTAMPTZ DEFAULT now()
+    );
+    CREATE TABLE IF NOT EXISTS poll_options (
+      id SERIAL PRIMARY KEY,
+      poll_id INTEGER REFERENCES polls(id) ON DELETE CASCADE,
+      label TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS poll_votes (
+      id SERIAL PRIMARY KEY,
+      option_id INTEGER REFERENCES poll_options(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      UNIQUE(option_id, name)
+    );
+  `);
+
+  const { rows } = await pool.query("SELECT COUNT(*)::int AS n FROM plans");
+  if (rows[0].n === 0) {
+    for (const [slug, title, emoji, desc, loc, price, color] of SEED) {
+      await pool.query(
+        `INSERT INTO plans (slug, title, emoji, description, location, price, color, fixed)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,true) ON CONFLICT (slug) DO NOTHING`,
+        [slug, title, emoji, desc, loc, price, color]
+      );
+    }
+    console.log("Planes iniciales creados.");
+  }
+}
+
+const clean = (s, max) => String(s == null ? "" : s).trim().slice(0, max);
+
+// ---------- API ----------
+app.get("/api/data", async (_req, res) => {
+  try {
+    const plans = (await pool.query("SELECT * FROM plans ORDER BY fixed DESC, id ASC")).rows;
+    const signups = (await pool.query("SELECT plan_id, name FROM signups ORDER BY id")).rows;
+    const avail = (await pool.query("SELECT name, to_char(day,'YYYY-MM-DD') AS day FROM availability")).rows;
+    const polls = (await pool.query("SELECT * FROM polls ORDER BY created_at DESC")).rows;
+    const options = (await pool.query("SELECT * FROM poll_options ORDER BY id")).rows;
+    const votes = (await pool.query("SELECT option_id, name FROM poll_votes")).rows;
+
+    const planList = plans.map((p) => ({
+      ...p,
+      signups: signups.filter((s) => s.plan_id === p.id).map((s) => s.name),
+    }));
+    const availability = {};
+    avail.forEach((a) => {
+      (availability[a.name] ||= []).push(a.day);
+    });
+    const pollList = polls.map((poll) => ({
+      id: poll.id,
+      question: poll.question,
+      created_by: poll.created_by,
+      options: options
+        .filter((o) => o.poll_id === poll.id)
+        .map((o) => ({ id: o.id, label: o.label, votes: votes.filter((v) => v.option_id === o.id).map((v) => v.name) })),
+    }));
+
+    res.json({ plans: planList, availability, polls: pollList });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "No se pudo leer la base de datos" });
+  }
+});
+
+// Proponer un plan nuevo
+app.post("/api/plans", async (req, res) => {
+  try {
+    const title = clean(req.body.title, 80);
+    if (!title) return res.status(400).json({ error: "Falta el título" });
+    const emoji = clean(req.body.emoji, 8) || "📍";
+    const description = clean(req.body.description, 400);
+    const location = clean(req.body.location, 120);
+    const price = clean(req.body.price, 60);
+    const created_by = clean(req.body.name, 40);
+    const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+    const { rows } = await pool.query(
+      `INSERT INTO plans (title, emoji, description, location, price, color, fixed, created_by)
+       VALUES ($1,$2,$3,$4,$5,$6,false,$7) RETURNING id`,
+      [title, emoji, description, location, price, color, created_by]
+    );
+    res.json({ ok: true, id: rows[0].id });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "No se pudo crear el plan" });
+  }
+});
+
+// Borrar una propuesta (solo no fijas)
+app.delete("/api/plans/:id", async (req, res) => {
+  try {
+    await pool.query("DELETE FROM plans WHERE id=$1 AND fixed=false", [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: "No se pudo borrar" });
+  }
+});
+
+// Apuntarse / quitarse de un plan (toggle)
+app.post("/api/plans/:id/toggle", async (req, res) => {
+  try {
+    const name = clean(req.body.name, 40);
+    if (!name) return res.status(400).json({ error: "Pon tu nombre primero" });
+    const pid = req.params.id;
+    const exists = await pool.query("SELECT 1 FROM signups WHERE plan_id=$1 AND name=$2", [pid, name]);
+    if (exists.rowCount) {
+      await pool.query("DELETE FROM signups WHERE plan_id=$1 AND name=$2", [pid, name]);
+      res.json({ ok: true, joined: false });
+    } else {
+      await pool.query("INSERT INTO signups (plan_id, name) VALUES ($1,$2) ON CONFLICT DO NOTHING", [pid, name]);
+      res.json({ ok: true, joined: true });
+    }
+  } catch (e) {
+    res.status(500).json({ error: "No se pudo actualizar" });
+  }
+});
+
+// Guardar disponibilidad de una persona (reemplaza sus días)
+app.post("/api/availability", async (req, res) => {
+  const c = await pool.connect();
+  try {
+    const name = clean(req.body.name, 40);
+    if (!name) return res.status(400).json({ error: "Pon tu nombre primero" });
+    const days = Array.isArray(req.body.days) ? req.body.days.filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d)).slice(0, 200) : [];
+    await c.query("BEGIN");
+    await c.query("DELETE FROM availability WHERE name=$1", [name]);
+    for (const d of days) {
+      await c.query("INSERT INTO availability (name, day) VALUES ($1,$2) ON CONFLICT DO NOTHING", [name, d]);
+    }
+    await c.query("COMMIT");
+    res.json({ ok: true, count: days.length });
+  } catch (e) {
+    await c.query("ROLLBACK").catch(() => {});
+    res.status(500).json({ error: "No se pudo guardar la disponibilidad" });
+  } finally {
+    c.release();
+  }
+});
+
+// Crear votación
+app.post("/api/polls", async (req, res) => {
+  const c = await pool.connect();
+  try {
+    const question = clean(req.body.question, 160);
+    const created_by = clean(req.body.name, 40);
+    const options = (Array.isArray(req.body.options) ? req.body.options : [])
+      .map((o) => clean(o, 80))
+      .filter(Boolean)
+      .slice(0, 12);
+    if (!question || options.length < 2) return res.status(400).json({ error: "Pon una pregunta y al menos 2 opciones" });
+    await c.query("BEGIN");
+    const { rows } = await c.query("INSERT INTO polls (question, created_by) VALUES ($1,$2) RETURNING id", [question, created_by]);
+    for (const label of options) {
+      await c.query("INSERT INTO poll_options (poll_id, label) VALUES ($1,$2)", [rows[0].id, label]);
+    }
+    await c.query("COMMIT");
+    res.json({ ok: true, id: rows[0].id });
+  } catch (e) {
+    await c.query("ROLLBACK").catch(() => {});
+    res.status(500).json({ error: "No se pudo crear la votación" });
+  } finally {
+    c.release();
+  }
+});
+
+// Votar (toggle) una opción
+app.post("/api/options/:id/vote", async (req, res) => {
+  try {
+    const name = clean(req.body.name, 40);
+    if (!name) return res.status(400).json({ error: "Pon tu nombre primero" });
+    const oid = req.params.id;
+    const exists = await pool.query("SELECT 1 FROM poll_votes WHERE option_id=$1 AND name=$2", [oid, name]);
+    if (exists.rowCount) {
+      await pool.query("DELETE FROM poll_votes WHERE option_id=$1 AND name=$2", [oid, name]);
+      res.json({ ok: true, voted: false });
+    } else {
+      await pool.query("INSERT INTO poll_votes (option_id, name) VALUES ($1,$2) ON CONFLICT DO NOTHING", [oid, name]);
+      res.json({ ok: true, voted: true });
+    }
+  } catch (e) {
+    res.status(500).json({ error: "No se pudo votar" });
+  }
+});
+
+app.delete("/api/polls/:id", async (req, res) => {
+  try {
+    await pool.query("DELETE FROM polls WHERE id=$1", [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: "No se pudo borrar" });
+  }
+});
+
+const PORT = process.env.PORT || 3000;
+init()
+  .then(() => app.listen(PORT, () => console.log("Plan de verano escuchando en " + PORT)))
+  .catch((e) => {
+    console.error("Error iniciando la base de datos:", e);
+    // Arranca igualmente para no caer del todo; la API devolverá errores hasta que la BD esté lista.
+    app.listen(PORT, () => console.log("Servidor arriba (sin BD) en " + PORT));
+  });
