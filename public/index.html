@@ -3,6 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0B3E45">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PATATUQUENS">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="/icon-192.png">
 <title>Plan de Verano '26 · PATATUQUENS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,7 +32,7 @@
   /* header */
   header{
     background:linear-gradient(155deg,#0B3E45,#0E5A5C 60%,#1F9E96);color:#fff;
-    border-radius:0 0 26px 26px;padding:26px 20px 22px;position:relative;overflow:hidden
+    border-radius:0 0 26px 26px;padding:calc(26px + env(safe-area-inset-top,0px)) 20px 22px;position:relative;overflow:hidden
   }
   header .sun{position:absolute;top:-50px;right:-30px;width:170px;height:170px;border-radius:50%;
     background:radial-gradient(circle,#FFD46B,#F6B53C 60%,transparent 72%);opacity:.85}
@@ -405,6 +413,11 @@ async function delPoll(id){if(!confirm('¿Borrar la votación?'))return;try{awai
 updateHint();
 load();
 setInterval(load,20000); // refresco suave para ver cambios de los demás
+
+// Service worker: hace la web instalable en el móvil
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
+}
 </script>
 </body>
 </html>
