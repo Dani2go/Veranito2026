@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Plan de Verano '26 · la cuadrilla</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sea:#0B3E45; --teal:#1F9E96; --leaf:#5AA06B; --ember:#E4572E;
+    --plum:#7D5BA6; --sun:#D8922B; --sky:#2E8FB0;
+    --sand:#FBF3E2; --card:#FFFFFF; --ink:#16302E; --muted:#62756F; --line:#E7E0CE;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;font-family:'Inter',system-ui,sans-serif;color:var(--ink);line-height:1.5;
+    background:radial-gradient(120% 70% at 100% -5%,rgba(31,158,150,.16),transparent 55%),var(--sand);
+    background-attachment:fixed;-webkit-text-size-adjust:100%;padding-bottom:40px
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px}
+
+  /* header */
+  header{
+    background:linear-gradient(155deg,#0B3E45,#0E5A5C 60%,#1F9E96);color:#fff;
+    border-radius:0 0 26px 26px;padding:26px 20px 22px;position:relative;overflow:hidden
+  }
+  header .sun{position:absolute;top:-50px;right:-30px;width:170px;height:170px;border-radius:50%;
+    background:radial-gradient(circle,#FFD46B,#F6B53C 60%,transparent 72%);opacity:.85}
+  .kick{font-size:.72rem;font-weight:700;letter-spacing:.26em;text-transform:uppercase;color:#9BE7DF;position:relative}
+  h1{font-family:'Bricolage Grotesque';font-weight:800;font-size:clamp(2rem,8vw,2.8rem);line-height:.92;margin:6px 0 0;position:relative}
+  h1 em{font-style:normal;color:#F6B53C}
+  .who{display:flex;gap:8px;align-items:center;margin-top:16px;position:relative}
+  .who input{
+    flex:1;border:none;border-radius:12px;padding:11px 13px;font-family:'Inter';font-size:.95rem;
+    background:rgba(255,255,255,.95);color:var(--ink)
+  }
+  .who input:focus{outline:2px solid #F6B53C}
+  .who span{font-size:.78rem;color:#BFE9E4;white-space:nowrap}
+
+  /* tabs */
+  nav.tabs{display:flex;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:5px;margin:16px auto;position:sticky;top:8px;z-index:20;box-shadow:0 6px 20px -14px rgba(0,0,0,.3)}
+  nav.tabs button{
+    flex:1;border:none;background:transparent;font-family:'Inter';font-weight:700;font-size:.9rem;
+    color:var(--muted);padding:10px 4px;border-radius:10px;cursor:pointer
+  }
+  nav.tabs button.active{background:var(--sea);color:#fff}
+
+  section{display:none}
+  section.active{display:block;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1}}
+  .sec-title{font-family:'Bricolage Grotesque';font-weight:700;color:var(--sea);font-size:1.3rem;margin:6px 0 4px}
+  .sec-sub{color:var(--muted);font-size:.88rem;margin:0 0 16px}
+
+  /* plan cards */
+  .plan{
+    background:var(--card);border:1px solid var(--line);border-left:10px solid var(--c);
+    border-radius:18px;padding:16px 18px;margin-bottom:14px
+  }
+  .plan[data-c=teal]{--c:var(--teal);--cl:#E4F5F3}
+  .plan[data-c=leaf]{--c:var(--leaf);--cl:#E9F3EB}
+  .plan[data-c=ember]{--c:var(--ember);--cl:#FBE9E2}
+  .plan[data-c=plum]{--c:var(--plum);--cl:#EFEAF7}
+  .plan[data-c=sun]{--c:var(--sun);--cl:#F8EDD6}
+  .plan[data-c=sky]{--c:var(--sky);--cl:#E1F0F5}
+  .plan .head{display:flex;gap:12px;align-items:flex-start}
+  .plan .emoji{font-size:1.8rem;line-height:1}
+  .plan h3{font-family:'Bricolage Grotesque';font-weight:700;font-size:1.2rem;color:var(--sea);margin:0;flex:1}
+  .plan .desc{font-size:.9rem;color:#3C534F;margin:8px 0 0}
+  .plan .meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .chip{font-size:.78rem;font-weight:700;padding:4px 11px;border-radius:999px}
+  .chip.where{color:var(--c);background:var(--cl)}
+  .chip.price{color:#fff;background:var(--c)}
+  .plan .ppl{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+  .ppl .nm{font-size:.78rem;font-weight:600;background:var(--cl);color:var(--sea);padding:3px 10px;border-radius:999px}
+  .plan .foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px}
+  .plan .count{font-size:.8rem;color:var(--muted);font-weight:600}
+  .btn{
+    border:none;font-family:'Inter';font-weight:700;font-size:.88rem;border-radius:11px;
+    padding:9px 16px;cursor:pointer;background:var(--c);color:#fff
+  }
+  .btn.out{background:var(--cl);color:var(--c)}
+  .btn.ghost{background:transparent;border:1.5px solid var(--line);color:var(--muted)}
+  .del{background:none;border:none;color:#C2BBA6;cursor:pointer;font-size:.8rem;font-weight:600}
+  .del:hover{color:var(--ember)}
+
+  /* forms */
+  .addcard{background:var(--card);border:1.5px dashed var(--line);border-radius:18px;padding:16px 18px;margin-bottom:14px}
+  .addcard summary{font-family:'Bricolage Grotesque';font-weight:700;color:var(--sea);cursor:pointer;list-style:none;font-size:1.05rem}
+  .addcard summary::-webkit-details-marker{display:none}
+  .addcard summary::before{content:"＋ ";color:var(--teal)}
+  .addcard[open] summary::before{content:"– "}
+  .form{margin-top:14px;display:flex;flex-direction:column;gap:10px}
+  .form input,.form textarea{
+    width:100%;border:1.5px solid var(--line);border-radius:11px;padding:10px 12px;font-family:'Inter';font-size:.92rem
+  }
+  .form input:focus,.form textarea:focus{outline:none;border-color:var(--teal)}
+  .form .two{display:flex;gap:10px}
+  .form .two input{flex:1;min-width:0}
+
+  /* calendar */
+  .legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.78rem;color:var(--muted);margin-bottom:12px}
+  .legend i{display:inline-block;width:14px;height:14px;border-radius:5px;vertical-align:-3px;margin-right:5px}
+  .months{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  @media(max-width:520px){.months{grid-template-columns:1fr}}
+  .month{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px}
+  .month h4{font-family:'Bricolage Grotesque';font-weight:700;color:var(--sea);margin:0 0 10px;text-transform:capitalize;font-size:1rem}
+  .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+  .dow{font-size:.6rem;font-weight:700;color:var(--muted);text-align:center;text-transform:uppercase}
+  .day{
+    aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:.8rem;
+    border-radius:9px;cursor:pointer;position:relative;background:#F4EEDD;user-select:none
+  }
+  .day.pad{visibility:hidden;cursor:default}
+  .day .n{position:relative;z-index:2}
+  .day.mine{background:var(--teal);color:#fff;font-weight:700}
+  .day .cnt{position:absolute;top:2px;right:3px;font-size:.52rem;font-weight:800;color:var(--sun);z-index:2}
+  .day.mine .cnt{color:#fff}
+  .day .heat{position:absolute;inset:0;border-radius:9px;background:var(--sun);z-index:1}
+  .save-bar{position:sticky;bottom:10px;margin-top:16px;display:flex;gap:10px;align-items:center;
+    background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;box-shadow:0 8px 24px -16px rgba(0,0,0,.4)}
+  .save-bar .info{flex:1;font-size:.82rem;color:var(--muted)}
+  .best{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-top:16px}
+  .best h4{margin:0 0 8px;font-family:'Bricolage Grotesque';color:var(--sea)}
+  .best ol{margin:0;padding-left:18px;font-size:.9rem}
+  .best li{margin:3px 0}
+
+  /* polls */
+  .poll{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px 18px;margin-bottom:14px}
+  .poll h3{font-family:'Bricolage Grotesque';font-weight:700;color:var(--sea);font-size:1.1rem;margin:0 0 2px}
+  .poll .by{font-size:.74rem;color:var(--muted);margin-bottom:12px}
+  .opt{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:10px 13px;border-radius:12px;border:1.5px solid var(--line);
+    margin-bottom:8px;cursor:pointer;position:relative;overflow:hidden}
+  .opt .bar{position:absolute;left:0;top:0;bottom:0;background:rgba(31,158,150,.14);z-index:0}
+  .opt .lbl{position:relative;z-index:1;font-weight:600;font-size:.92rem;flex:1}
+  .opt .v{position:relative;z-index:1;font-size:.8rem;font-weight:700;color:var(--muted)}
+  .opt.voted{border-color:var(--teal)}
+  .opt.voted .lbl{color:var(--sea)}
+  .opt .names{position:relative;z-index:1;width:100%;font-size:.72rem;color:var(--muted);margin-top:2px}
+
+  .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%) translateY(80px);
+    background:var(--sea);color:#fff;padding:11px 18px;border-radius:12px;font-size:.88rem;font-weight:600;
+    opacity:0;transition:.25s;z-index:50}
+  .toast.show{transform:translateX(-50%);opacity:1}
+  .empty{color:var(--muted);font-size:.9rem;text-align:center;padding:24px 0}
+  *:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="sun"></div>
+  <div class="wrap" style="padding:0">
+    <div class="kick">Cantabria · la cuadrilla</div>
+    <h1>Plan de verano <em>'26</em></h1>
+    <div class="who">
+      <input id="name" type="text" placeholder="Tu nombre (para apuntarte y votar)" maxlength="40" autocomplete="name">
+      <span id="whoHint"></span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <nav class="tabs">
+    <button data-tab="planes" class="active">Planes</button>
+    <button data-tab="dispo">Disponibilidad</button>
+    <button data-tab="votos">Votaciones</button>
+  </nav>
+
+  <!-- PLANES -->
+  <section id="planes" class="active">
+    <h2 class="sec-title">Los planes</h2>
+    <p class="sec-sub">Apúntate a los que quieras. Cualquiera puede proponer uno nuevo.</p>
+    <div id="planList"></div>
+    <details class="addcard">
+      <summary>Proponer un plan</summary>
+      <div class="form">
+        <div class="two">
+          <input id="pEmoji" placeholder="Emoji 🎉" maxlength="8" style="flex:0 0 90px">
+          <input id="pTitle" placeholder="Título del plan" maxlength="80">
+        </div>
+        <textarea id="pDesc" rows="2" placeholder="¿En qué consiste?" maxlength="400"></textarea>
+        <div class="two">
+          <input id="pLoc" placeholder="Sitio" maxlength="120">
+          <input id="pPrice" placeholder="Precio aprox." maxlength="60">
+        </div>
+        <button class="btn" style="background:var(--teal)" onclick="addPlan()">Añadir plan</button>
+      </div>
+    </details>
+  </section>
+
+  <!-- DISPONIBILIDAD -->
+  <section id="dispo">
+    <h2 class="sec-title">¿Cuándo puedes?</h2>
+    <p class="sec-sub">Toca los días que te vendrían bien este verano. Los números muestran cuánta gente puede ese día.</p>
+    <div class="legend">
+      <span><i style="background:var(--teal)"></i>Tus días</span>
+      <span><i style="background:var(--sun);opacity:.5"></i>Disponibilidad del grupo</span>
+    </div>
+    <div class="months" id="months"></div>
+    <div class="best" id="best"></div>
+    <div class="save-bar">
+      <span class="info" id="dispoInfo">Marca tus días y guarda.</span>
+      <button class="btn" style="background:var(--teal)" onclick="saveDispo()">Guardar mis días</button>
+    </div>
+  </section>
+
+  <!-- VOTACIONES -->
+  <section id="votos">
+    <h2 class="sec-title">Votaciones</h2>
+    <p class="sec-sub">Para decidir cualquier cosa: sitio, fecha, qué traer… Puedes marcar varias opciones.</p>
+    <div id="pollList"></div>
+    <details class="addcard">
+      <summary>Crear una votación</summary>
+      <div class="form">
+        <input id="qText" placeholder="Pregunta (p. ej. ¿Qué finde para Casa Poli?)" maxlength="160">
+        <div id="optWrap">
+          <input class="optIn" placeholder="Opción 1" maxlength="80">
+          <input class="optIn" placeholder="Opción 2" maxlength="80" style="margin-top:8px">
+        </div>
+        <button class="btn ghost" onclick="addOptField()">+ Otra opción</button>
+        <button class="btn" style="background:var(--teal)" onclick="addPoll()">Crear votación</button>
+      </div>
+    </details>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const MONTHS=[[2026,5],[2026,6],[2026,7],[2026,8]];
+const MN=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const DOW=['L','M','X','J','V','S','D'];
+let DATA={plans:[],availability:{},polls:[]};
+let mine=new Set();           // mis días seleccionados (sin guardar)
+const nameEl=document.getElementById('name');
+nameEl.value=localStorage.getItem('pv_name')||'';
+nameEl.addEventListener('input',()=>{localStorage.setItem('pv_name',nameEl.value.trim());updateHint();});
+function myName(){return (nameEl.value||'').trim();}
+function updateHint(){document.getElementById('whoHint').textContent=myName()?('Hola, '+myName()):'';}
+
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200);}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+async function api(url,opts){const r=await fetch(url,opts);const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Error');return j;}
+
+// tabs
+document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.toggle('active',x===b));
+  document.querySelectorAll('section').forEach(s=>s.classList.toggle('active',s.id===b.dataset.tab));
+  window.scrollTo({top:0,behavior:'smooth'});
+});
+
+async function load(){
+  try{DATA=await api('/api/data');}
+  catch(e){toast('No se pudo cargar. Reintenta.');return;}
+  // mis días desde lo guardado
+  const me=myName();
+  mine=new Set(me&&DATA.availability[me]?DATA.availability[me]:[]);
+  renderPlans();renderCalendar();renderPolls();updateHint();
+}
+
+/* ---------- PLANES ---------- */
+function renderPlans(){
+  const me=myName();
+  document.getElementById('planList').innerHTML=DATA.plans.map(p=>{
+    const joined=p.signups.includes(me)&&me;
+    const ppl=p.signups.length?`<div class="ppl">${p.signups.map(n=>`<span class="nm">${esc(n)}</span>`).join('')}</div>`:'';
+    return `<article class="plan" data-c="${p.color||'teal'}">
+      <div class="head"><span class="emoji">${esc(p.emoji||'📍')}</span><h3>${esc(p.title)}</h3></div>
+      ${p.description?`<p class="desc">${esc(p.description)}</p>`:''}
+      <div class="meta">
+        ${p.location?`<span class="chip where">📍 ${esc(p.location)}</span>`:''}
+        ${p.price?`<span class="chip price">${esc(p.price)}</span>`:''}
+      </div>
+      ${ppl}
+      <div class="foot">
+        <span class="count">${p.signups.length} apuntad${p.signups.length===1?'o/a':'os/as'}${!p.fixed&&p.created_by?' · propuesto por '+esc(p.created_by):''}</span>
+        <span>
+          ${!p.fixed?`<button class="del" onclick="delPlan(${p.id})">borrar</button> `:''}
+          <button class="btn ${joined?'out':''}" onclick="togglePlan(${p.id})">${joined?'✓ Apuntado':'Apuntarme'}</button>
+        </span>
+      </div>
+    </article>`;
+  }).join('');
+}
+async function togglePlan(id){
+  if(!myName())return toast('Escribe tu nombre arriba primero');
+  try{await api(`/api/plans/${id}/toggle`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:myName()})});await load();}
+  catch(e){toast(e.message);}
+}
+async function addPlan(){
+  const title=document.getElementById('pTitle').value.trim();
+  if(!title)return toast('Ponle un título al plan');
+  try{
+    await api('/api/plans',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      title,emoji:document.getElementById('pEmoji').value,description:document.getElementById('pDesc').value,
+      location:document.getElementById('pLoc').value,price:document.getElementById('pPrice').value,name:myName()
+    })});
+    ['pTitle','pEmoji','pDesc','pLoc','pPrice'].forEach(i=>document.getElementById(i).value='');
+    toast('Plan añadido');await load();
+  }catch(e){toast(e.message);}
+}
+async function delPlan(id){if(!confirm('¿Borrar esta propuesta?'))return;try{await api(`/api/plans/${id}`,{method:'DELETE'});await load();}catch(e){toast(e.message);}}
+
+/* ---------- DISPONIBILIDAD ---------- */
+function iso(y,m,d){return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;}
+function counts(){
+  const me=myName();const c={};
+  Object.entries(DATA.availability).forEach(([n,days])=>{if(n===me)return;days.forEach(d=>c[d]=(c[d]||0)+1);});
+  return c;
+}
+function renderCalendar(){
+  const cnt=counts();const maxC=Math.max(1,...Object.values(cnt));
+  document.getElementById('months').innerHTML=MONTHS.map(([y,m])=>{
+    const lead=(new Date(y,m,1).getDay()+6)%7,days=new Date(y,m+1,0).getDate();
+    let cells='';for(let i=0;i<lead;i++)cells+=`<div class="day pad"></div>`;
+    for(let d=1;d<=days;d++){
+      const s=iso(y,m,d),n=cnt[s]||0,mineSel=mine.has(s);
+      const heat=n?`<span class="heat" style="opacity:${0.12+0.5*(n/maxC)}"></span>`:'';
+      const badge=n?`<span class="cnt">${n}</span>`:'';
+      cells+=`<div class="day${mineSel?' mine':''}" data-d="${s}" onclick="toggleDay('${s}')">${heat}${badge}<span class="n">${d}</span></div>`;
+    }
+    return `<div class="month"><h4>${MN[m]}</h4><div class="grid">${DOW.map(x=>`<div class="dow">${x}</div>`).join('')}${cells}</div></div>`;
+  }).join('');
+  renderBest(cnt);
+  document.getElementById('dispoInfo').textContent=mine.size?`${mine.size} día${mine.size===1?'':'s'} marcad${mine.size===1?'o':'os'}.`:'Marca tus días y guarda.';
+}
+function toggleDay(s){if(!myName())return toast('Escribe tu nombre arriba primero');mine.has(s)?mine.delete(s):mine.add(s);renderCalendar();}
+function renderBest(cnt){
+  const me=myName();const tot={};
+  Object.entries(DATA.availability).forEach(([n,days])=>days.forEach(d=>tot[d]=(tot[d]||0)+1));
+  if(me)mine.forEach(d=>{}); // los tuyos sin guardar no cuentan hasta guardar
+  const top=Object.entries(tot).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const b=document.getElementById('best');
+  if(!top.length){b.innerHTML='';return;}
+  b.innerHTML=`<h4>Días con más gente</h4><ol>${top.map(([d,n])=>{
+    const dt=new Date(d+'T00:00');const dn=['dom','lun','mar','mié','jue','vie','sáb'][dt.getDay()];
+    return `<li>${dn} ${dt.getDate()} ${MN[dt.getMonth()].slice(0,3)} — <b>${n}</b> persona${n===1?'':'s'}</li>`;
+  }).join('')}</ol>`;
+}
+async function saveDispo(){
+  if(!myName())return toast('Escribe tu nombre arriba primero');
+  try{await api('/api/availability',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:myName(),days:[...mine]})});
+    toast('Disponibilidad guardada');await load();}
+  catch(e){toast(e.message);}
+}
+
+/* ---------- VOTACIONES ---------- */
+function renderPolls(){
+  const me=myName();const el=document.getElementById('pollList');
+  if(!DATA.polls.length){el.innerHTML='<p class="empty">Todavía no hay votaciones. Crea la primera abajo.</p>';return;}
+  el.innerHTML=DATA.polls.map(p=>{
+    const max=Math.max(1,...p.options.map(o=>o.votes.length));
+    return `<div class="poll">
+      <h3>${esc(p.question)}</h3>
+      <div class="by">${p.created_by?'por '+esc(p.created_by):''} <button class="del" onclick="delPoll(${p.id})">borrar</button></div>
+      ${p.options.map(o=>{
+        const voted=me&&o.votes.includes(me);
+        return `<div class="opt${voted?' voted':''}" onclick="vote(${o.id})">
+          <span class="bar" style="width:${100*o.votes.length/max}%"></span>
+          <span class="lbl">${voted?'✓ ':''}${esc(o.label)}</span>
+          <span class="v">${o.votes.length}</span>
+          ${o.votes.length?`<span class="names">${o.votes.map(esc).join(', ')}</span>`:''}
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+}
+async function vote(oid){if(!myName())return toast('Escribe tu nombre arriba primero');try{await api(`/api/options/${oid}/vote`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:myName()})});await load();}catch(e){toast(e.message);}}
+function addOptField(){const i=document.createElement('input');i.className='optIn';i.placeholder='Otra opción';i.maxLength=80;i.style.marginTop='8px';document.getElementById('optWrap').appendChild(i);}
+async function addPoll(){
+  const question=document.getElementById('qText').value.trim();
+  const options=[...document.querySelectorAll('.optIn')].map(i=>i.value.trim()).filter(Boolean);
+  if(!question||options.length<2)return toast('Pon una pregunta y al menos 2 opciones');
+  try{await api('/api/polls',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question,options,name:myName()})});
+    document.getElementById('qText').value='';document.getElementById('optWrap').innerHTML='<input class="optIn" placeholder="Opción 1" maxlength="80"><input class="optIn" placeholder="Opción 2" maxlength="80" style="margin-top:8px">';
+    toast('Votación creada');await load();}
+  catch(e){toast(e.message);}
+}
+async function delPoll(id){if(!confirm('¿Borrar la votación?'))return;try{await api(`/api/polls/${id}`,{method:'DELETE'});await load();}catch(e){toast(e.message);}}
+
+updateHint();
+load();
+setInterval(load,20000); // refresco suave para ver cambios de los demás
+</script>
+</body>
+</html>
