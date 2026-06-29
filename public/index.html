@@ -141,6 +141,9 @@
   .best h4{margin:0 0 8px;font-family:'Bricolage Grotesque';color:var(--sea)}
   .best ol{margin:0;padding-left:18px;font-size:.9rem}
   .best li{margin:3px 0}
+  .miss{margin-top:14px;background:#FBF1E6;border:1px solid #f0dcc2;border-radius:12px;padding:10px 12px}
+  .miss h4{margin:0 0 4px;font-family:'Bricolage Grotesque';color:var(--ember)}
+  .miss p{margin:0;font-size:.9rem;color:var(--sea);line-height:1.45}
   /* ---- COSTA: tiempo y mareas ---- */
   .block-h{font-family:'Bricolage Grotesque';font-weight:700;color:var(--sea);font-size:1.05rem;margin:20px 0 10px}
   .wxwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:14px;background:var(--card)}
@@ -409,6 +412,22 @@ function othersCounts(){
   return c;
 }
 function effCount(s,oth){return (oth[s]||0)+(mine.has(s)?1:0);}
+function members(){return [...document.querySelectorAll('#name option')].map(o=>o.textContent.trim()).filter(t=>t&&t!=='Elige tu nombre');}
+function peopleOn(day){
+  const me=myName(), set=new Set();
+  Object.entries(DATA.availability).forEach(([n,days])=>{ if(n!==me && days.includes(day)) set.add(n); });
+  if(me && mine.has(day)) set.add(me);
+  const order=members();
+  return [...set].sort((a,b)=>order.indexOf(a)-order.indexOf(b));
+}
+function notMarked(){
+  const me=myName();
+  return members().filter(n=>{
+    const saved=DATA.availability[n]&&DATA.availability[n].length;
+    const meHas=(n===me)&&mine.size>0;
+    return !saved && !meHas;
+  });
+}
 function renderCalendar(){
   const oth=othersCounts();
   let maxC=1;
@@ -433,11 +452,19 @@ function renderBest(oth){
   MONTHS.forEach(([y,m])=>{const days=new Date(y,m+1,0).getDate();for(let d=1;d<=days;d++){const s=iso(y,m,d),n=effCount(s,oth);if(n)tot[s]=n;}});
   const top=Object.entries(tot).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).slice(0,5);
   const b=document.getElementById('best');
-  if(!top.length){b.innerHTML='';return;}
-  b.innerHTML=`<h4>Días con más gente</h4><ol>${top.map(([d,n])=>{
-    const dt=new Date(d+'T00:00');const dn=['dom','lun','mar','mié','jue','vie','sáb'][dt.getDay()];
-    return `<li>${dn} ${dt.getDate()} ${MN[dt.getMonth()].slice(0,3)} — <b>${n}</b> persona${n===1?'':'s'}</li>`;
-  }).join('')}</ol>`;
+  let html='';
+  if(top.length){
+    html+=`<h4>Días con más gente</h4><ol>${top.map(([d,n])=>{
+      const dt=new Date(d+'T00:00');const dn=['dom','lun','mar','mié','jue','vie','sáb'][dt.getDay()];
+      const who=peopleOn(d).join(', ');
+      return `<li>${dn} ${dt.getDate()} ${MN[dt.getMonth()].slice(0,3)} — <b>${n}</b>: ${who}</li>`;
+    }).join('')}</ol>`;
+  }
+  const miss=notMarked();
+  if(miss.length){
+    html+=`<div class="miss"><h4>Falta por marcar</h4><p><b>${miss.join(', ')}</b> — ¡o te apuntas o te apunto! 💩</p></div>`;
+  }
+  b.innerHTML=html;
 }
 async function saveDispo(){
   if(!myName())return toast('Elige tu nombre arriba');
