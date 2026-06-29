@@ -162,10 +162,12 @@
   /* gráfica de mareas */
   .tlink{display:block;background:#E1F0F5;color:#1c6b86;font-weight:700;font-size:.82rem;text-decoration:none;padding:11px 14px;border-radius:12px;margin-bottom:12px;border:1px solid #c7e3ec}
   .tlink:hover{filter:brightness(.97)}
-  .tideday{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px 6px;margin-bottom:12px}
-  .tdh{font-family:'Bricolage Grotesque';font-weight:700;color:var(--sea);margin-bottom:4px;text-transform:capitalize}
-  .tdh .coef{font-family:'Inter';font-size:.72rem;font-weight:600;color:var(--muted);margin-left:8px}
-  .tchart{width:100%;height:auto;display:block}
+  .tideday{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px}
+  .tdh{font-family:'Bricolage Grotesque';font-weight:700;color:var(--sea);margin-bottom:9px;text-transform:capitalize}
+  .tdrows{display:flex;flex-wrap:wrap;gap:8px}
+  .tide{font-size:.8rem;font-weight:700;padding:5px 11px;border-radius:999px;white-space:nowrap}
+  .tide.alta{background:#E1F0F5;color:#1c6b86}
+  .tide.baja{background:#F6EEDD;color:#8a5a12}
   .fineprint{font-size:.72rem;color:var(--muted);margin-top:14px;line-height:1.5}
 
   /* polls */
@@ -306,9 +308,10 @@
     <h3 class="block-h">El tiempo</h3>
     <div id="wx"></div>
     <h3 class="block-h">Mareas</h3>
+    <div id="tides"></div>
     <a class="tlink" href="https://es.tideschart.com/Spain/Cantabria/Provincia-de-Cantabria/Playa-de-Tagle/" target="_blank" rel="noopener">🌊 Mareas en Playa de Tagle — tu playa →</a>
     <a class="tlink" href="https://tablademareas.com/es/cantabria/suances" target="_blank" rel="noopener">📋 Coeficiente y horas exactas — Suances →</a>
-    <p class="fineprint">Las mareas se ven en webs especializadas (no se pueden incrustar): Playa de Tagle para tu playa, y la tabla de Suances para el coeficiente y las horas exactas. Viento en km/h.</p>
+    <p class="fineprint">Pleamares 🔺 y bajamares 🔻 con hora y altura reales (predicción armónica de Marea, referencia nivel medio del mar). Para el coeficiente y más detalle, los enlaces de arriba. Viento en km/h.</p>
   </section>
 </div>
 
@@ -499,7 +502,7 @@ function wmo(c){
     95:['⛈️','Tormenta'],96:['⛈️','Tormenta'],99:['⛈️','Tormenta']};
   return m[c]||['🌡️','—'];
 }
-function todayStr(){return new Date().toLocaleDateString('sv');} // YYYY-MM-DD local
+function todayStr(){return new Date().toLocaleDateString('sv',{timeZone:'Europe/Madrid'});} // YYYY-MM-DD (Cantabria)
 function dayLabel(s){const dt=new Date(s+'T00:00');return s===todayStr()?'Hoy':DAYN[dt.getDay()]+' '+dt.getDate();}
 async function loadCosta(){
   if(costaLoaded) return;
@@ -512,6 +515,29 @@ async function loadCosta(){
   }catch(e){
     document.getElementById('costaLoad').textContent='No se pudo cargar el tiempo. Reinténtalo en un momento.';
   }
+  loadTides();
+}
+async function loadTides(){
+  try{
+    const r=await fetch('/api/mareas'); if(!r.ok) throw 0;
+    const d=await r.json(); renderTides(d.extremes||[]);
+  }catch(e){ document.getElementById('tides').innerHTML=''; } // si falla, quedan los enlaces
+}
+function renderTides(ex){
+  const box=document.getElementById('tides');
+  if(!ex.length){ box.innerHTML=''; return; }
+  const byday={};
+  ex.forEach(e=>{const k=new Date(e.timestamp*1000).toLocaleDateString('sv',{timeZone:'Europe/Madrid'});(byday[k]=byday[k]||[]).push(e);});
+  const days=Object.keys(byday).sort().slice(0,7);
+  box.innerHTML=days.map(day=>{
+    const rows=byday[day].sort((a,b)=>a.timestamp-b.timestamp).map(e=>{
+      const hi=/HIGH/i.test(e.state);
+      const hh=new Date(e.timestamp*1000).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Madrid'});
+      const h=e.height.toFixed(1).replace('.',',');
+      return `<span class="tide ${hi?'alta':'baja'}">${hi?'🔺':'🔻'} ${hh} · ${h} m</span>`;
+    }).join('');
+    return `<div class="tideday"><div class="tdh">${dayLabel(day)}</div><div class="tdrows">${rows}</div></div>`;
+  }).join('');
 }
 function renderWeather(w){
   const d=w.daily, h=w.hourly, today=todayStr();
