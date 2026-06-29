@@ -19,6 +19,13 @@ const pool = new Pool({
 
 const COLORS = ["teal", "leaf", "ember", "plum", "sun", "sky", "navy"];
 
+// ---------- Mareas (Marea API) ----------
+// El token se lee de la variable de entorno MAREA_TOKEN (configúrala en Railway).
+// NUNCA va en el código del navegador: el servidor hace de intermediario y cachea
+// la predicción (una sola petición trae meses), para no gastar el cupo gratuito.
+const MAREA_TOKEN = process.env.MAREA_TOKEN || "";
+const TIDE_LAT = 43.4356, TIDE_LON = -4.0473; // Suances
+
 const SEED = [
   ["dougalls", "Comida en DouGall's", "🍺", "Comida en la fábrica de cerveza artesana de Liérganes. Tablas, birras de barril y terraza.", "Liérganes", "~30 €/persona (51 € con visita+maridaje)", "teal", "Sara"],
   ["casapoli", "Casa Poli", "🦞", "Casa de comidas de culto cerca de Llanes. Sin reservas (llegar 13:00), pescado del día y sidra.", "Puertas de Vidiago (Asturias)", "~35 €/persona", "leaf", "Daniel"],
@@ -73,6 +80,11 @@ async function init() {
       name TEXT NOT NULL,
       UNIQUE(option_id, name)
     );
+    CREATE TABLE IF NOT EXISTS cache (
+      key TEXT PRIMARY KEY,
+      data JSONB NOT NULL,
+      fetched_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
   `);
 
   // Sincroniza los planes fijos desde el código en cada arranque.
@@ -92,7 +104,64 @@ async function init() {
 
 const clean = (s, max) => String(s == null ? "" : s).trim().slice(0, max);
 
+// Predicción de mareas con caché. La marea es astronómica (apenas cambia), así que
+// refrescamos como MUCHO una vez al día (1 petición/día). Con ~98 prepago, cubre el
+// verano de sobra. Si el refresco falla un día, seguimos sirviendo lo último guardado.
+async function getTides() {
+  let cached = null;
+  try {
+    const r = await pool.query("SELECT data, fetched_at FROM cache WHERE key='tides'");
+    if (r.rows[0]) cached = r.rows[0];
+  } catch (_) {}
+
+  const now = Date.now();
+  const ageMs = cached ? now - new Date(cached.fetched_at).getTime() : Infinity;
+  if (cached && ageMs < 24 * 3600 * 1000) return cached.data; // ya refrescado hoy → caché
+
+  if (!MAREA_TOKEN) {
+    if (cached) return cached.data;            // sin token pero hay caché previa: úsala
+    throw new Error("MAREA_TOKEN no configurado");
+  }
+  try {
+    // Ventana de 16 días (sobra para los 7 que mostramos). Cuesta lo mismo: 1 petición.
+    const url = `https://api.marea.ooo/v2/tides?latitude=${TIDE_LAT}&longitude=${TIDE_LON}&duration=23040&interval=60&datum=MSL`;
+    const resp = await fetch(url, { headers: { "x-marea-api-token": MAREA_TOKEN } });
+    if (!resp.ok) throw new Error("Marea API " + resp.status);
+    const full = await resp.json();
+    const data = {
+      unit: full.unit || "m",
+      datum: full.datum || "MSL",
+      extremes: (full.extremes || []).map((e) => ({ timestamp: e.timestamp, height: e.height, state: e.state })),
+    };
+    await pool.query(
+      `INSERT INTO cache (key, data, fetched_at) VALUES ('tides', $1, now())
+       ON CONFLICT (key) DO UPDATE SET data = EXCLUDED.data, fetched_at = now()`,
+      [JSON.stringify(data)]
+    );
+    return data;
+  } catch (e) {
+    if (cached) return cached.data;            // si el refresco falla, sirve lo último
+    throw e;
+  }
+}
+
 // ---------- API ----------
+// Mareas de Suances: devuelve solo los extremos de hoy..+7 días (carga ligera).
+app.get("/api/mareas", async (_req, res) => {
+  try {
+    const data = await getTides();
+    const start = new Date(); start.setHours(0, 0, 0, 0);
+    const startMs = start.getTime(), endMs = startMs + 8 * 864e5;
+    const extremes = (data.extremes || []).filter((e) => {
+      const t = e.timestamp * 1000;
+      return t >= startMs && t <= endMs;
+    });
+    res.json({ extremes, unit: data.unit, datum: data.datum });
+  } catch (e) {
+    console.error("mareas:", e.message);
+    res.status(503).json({ error: "tides_unavailable" });
+  }
+});
 app.get("/api/data", async (_req, res) => {
   try {
     const plans = (await pool.query("SELECT * FROM plans ORDER BY fixed DESC, id ASC")).rows;
