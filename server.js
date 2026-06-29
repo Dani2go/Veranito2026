@@ -151,7 +151,8 @@ app.get("/api/mareas", async (_req, res) => {
   try {
     const data = await getTides();
     const start = new Date(); start.setHours(0, 0, 0, 0);
-    const startMs = start.getTime(), endMs = startMs + 8 * 864e5;
+    const startMs = start.getTime() - 864e5;        // desde ayer (continuidad de la curva)
+    const endMs = start.getTime() + 9 * 864e5;       // hasta +9 días
     const extremes = (data.extremes || []).filter((e) => {
       const t = e.timestamp * 1000;
       return t >= startMs && t <= endMs;
