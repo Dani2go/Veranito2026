@@ -162,12 +162,10 @@
   /* gráfica de mareas */
   .tlink{display:block;background:#E1F0F5;color:#1c6b86;font-weight:700;font-size:.82rem;text-decoration:none;padding:11px 14px;border-radius:12px;margin-bottom:12px;border:1px solid #c7e3ec}
   .tlink:hover{filter:brightness(.97)}
-  .tideday{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px}
-  .tdh{font-family:'Bricolage Grotesque';font-weight:700;color:var(--sea);margin-bottom:9px;text-transform:capitalize}
-  .tdrows{display:flex;flex-wrap:wrap;gap:8px}
-  .tide{font-size:.8rem;font-weight:700;padding:5px 11px;border-radius:999px;white-space:nowrap}
-  .tide.alta{background:#E1F0F5;color:#1c6b86}
-  .tide.baja{background:#F6EEDD;color:#8a5a12}
+  .tideday{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 12px 8px;margin-bottom:10px}
+  .tdh{font-family:'Bricolage Grotesque';font-weight:700;color:var(--sea);margin:0 2px 2px;text-transform:capitalize;display:flex;justify-content:space-between;align-items:baseline}
+  .tdh .rng{font-family:'Inter';font-size:.7rem;font-weight:600;color:var(--muted);text-transform:none}
+  .tchart{width:100%;height:auto;display:block}
   .fineprint{font-size:.72rem;color:var(--muted);margin-top:14px;line-height:1.5}
 
   /* polls */
@@ -309,9 +307,7 @@
     <div id="wx"></div>
     <h3 class="block-h">Mareas</h3>
     <div id="tides"></div>
-    <a class="tlink" href="https://es.tideschart.com/Spain/Cantabria/Provincia-de-Cantabria/Playa-de-Tagle/" target="_blank" rel="noopener">🌊 Mareas en Playa de Tagle — tu playa →</a>
-    <a class="tlink" href="https://tablademareas.com/es/cantabria/suances" target="_blank" rel="noopener">📋 Coeficiente y horas exactas — Suances →</a>
-    <p class="fineprint">Pleamares 🔺 y bajamares 🔻 con hora y altura reales (predicción armónica de Marea, referencia nivel medio del mar). Para el coeficiente y más detalle, los enlaces de arriba. Viento en km/h.</p>
+    <p class="fineprint">Curva de marea de Suances con pleamares y bajamares (hora y altura reales, predicción armónica de Marea, ref. nivel medio del mar). Viento en km/h.</p>
   </section>
 </div>
 
@@ -525,19 +521,65 @@ async function loadTides(){
 }
 function renderTides(ex){
   const box=document.getElementById('tides');
-  if(!ex.length){ box.innerHTML=''; return; }
+  if(!ex||!ex.length){ box.innerHTML=''; return; }
+  ex=ex.slice().sort((a,b)=>a.timestamp-b.timestamp);
+  // La API solo predice hacia delante, así que la madrugada de hoy ya pasada no viene.
+  // Reconstruimos esos extremos por simetría (medio ciclo ≈ 6h12m) solo para dibujar
+  // la curva (sin marcadores, van marcados como _synth).
+  const need=new Date(todayStr()+'T00:00').getTime()/1000, HALF=22350;
+  let guard=0;
+  while(ex[0].timestamp>need && guard++<6){
+    const e0=ex[0], oppHigh=!/HIGH/i.test(e0.state);
+    const ref=ex.find(e=>/HIGH/i.test(e.state)===oppHigh);
+    ex.unshift({timestamp:e0.timestamp-HALF, height:ref?ref.height:-e0.height, state:oppHigh?'HIGH TIDE':'LOW TIDE', _synth:true});
+  }
+  let gMin=Infinity,gMax=-Infinity;
+  ex.forEach(e=>{ if(e.height<gMin)gMin=e.height; if(e.height>gMax)gMax=e.height; });
+  const p=((gMax-gMin)||1)*0.22; gMin-=p; gMax+=p;          // margen para que quepan etiquetas
+  const fmtDay=t=>new Date(t*1000).toLocaleDateString('sv',{timeZone:'Europe/Madrid'});
   const byday={};
-  ex.forEach(e=>{const k=new Date(e.timestamp*1000).toLocaleDateString('sv',{timeZone:'Europe/Madrid'});(byday[k]=byday[k]||[]).push(e);});
-  const days=Object.keys(byday).sort().slice(0,7);
-  box.innerHTML=days.map(day=>{
-    const rows=byday[day].sort((a,b)=>a.timestamp-b.timestamp).map(e=>{
-      const hi=/HIGH/i.test(e.state);
-      const hh=new Date(e.timestamp*1000).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Madrid'});
-      const h=e.height.toFixed(1).replace('.',',');
-      return `<span class="tide ${hi?'alta':'baja'}">${hi?'🔺':'🔻'} ${hh} · ${h} m</span>`;
-    }).join('');
-    return `<div class="tideday"><div class="tdh">${dayLabel(day)}</div><div class="tdrows">${rows}</div></div>`;
+  ex.forEach(e=>{(byday[fmtDay(e.timestamp)]=byday[fmtDay(e.timestamp)]||[]).push(e);});
+  const today=todayStr();
+  const days=Object.keys(byday).filter(d=>d>=today).sort().slice(0,7);
+  box.innerHTML=days.map(day=>tideCurve(day,ex,gMin,gMax,day===today)).join('');
+}
+// altura interpolada (medio-coseno entre extremos: forma natural de la marea)
+function tideHeightAt(ms,ex){
+  const s=ms/1000; let prev=null,next=null;
+  for(let i=0;i<ex.length;i++){ if(ex[i].timestamp<=s) prev=ex[i]; else { next=ex[i]; break; } }
+  if(prev&&next){ const f=(s-prev.timestamp)/(next.timestamp-prev.timestamp); return prev.height+(next.height-prev.height)*(1-Math.cos(Math.PI*f))/2; }
+  return prev?prev.height:(next?next.height:0);
+}
+function tideCurve(day,ex,gMin,gMax,isToday){
+  const W=320,H=150,padL=8,padR=8,padT=32,padB=24;
+  const plotW=W-padL-padR, plotH=H-padT-padB, rng=(gMax-gMin)||1, DAY=864e5;
+  const dayStart=new Date(day+'T00:00').getTime();
+  const X=ms=>padL+((ms-dayStart)/DAY)*plotW;
+  const Y=h=>padT+(gMax-h)/rng*plotH;
+  let line='';
+  for(let m=0;m<=1440;m+=10){ const x=padL+(m/1440)*plotW, y=Y(tideHeightAt(dayStart+m*60000,ex)); line+=(m?'L':'M')+x.toFixed(1)+' '+y.toFixed(1)+' '; }
+  const area=line+`L ${(W-padR).toFixed(1)} ${(H-padB).toFixed(1)} L ${padL} ${(H-padB).toFixed(1)} Z`;
+  const dayEx=ex.filter(e=>{const t=e.timestamp*1000; return t>=dayStart && t<dayStart+DAY && !e._synth;});
+  const fmtT=t=>new Date(t*1000).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Madrid'});
+  const marks=dayEx.map(e=>{
+    const hi=/HIGH/i.test(e.state);
+    const x=Math.max(15,Math.min(W-15,X(e.timestamp*1000))), y=Y(e.height), col=hi?'#1F9E96':'#E4572E';
+    const t1=hi?y-18:y+13, t2=hi?y-8:y+23;
+    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.6" fill="${col}"/>
+      <text x="${x.toFixed(1)}" y="${t1.toFixed(1)}" text-anchor="middle" font-size="9.5" font-weight="700" fill="${col}">${fmtT(e.timestamp)}</text>
+      <text x="${x.toFixed(1)}" y="${t2.toFixed(1)}" text-anchor="middle" font-size="7.5" fill="#8a9794">${e.height.toFixed(1).replace('.',',')} m</text>`;
   }).join('');
+  let now='';
+  if(isToday){ const n=Date.now(); if(n>=dayStart&&n<dayStart+DAY){ const x=X(n), y=Y(tideHeightAt(n,ex));
+    now=`<line x1="${x.toFixed(1)}" y1="${padT-2}" x2="${x.toFixed(1)}" y2="${H-padB}" stroke="#9aa6a3" stroke-width="1" stroke-dasharray="3 3"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="#0B3E45"/>`; } }
+  let ticks=''; for(let hh=0;hh<=24;hh+=6){ ticks+=`<text x="${(padL+(hh/24)*plotW).toFixed(1)}" y="${H-5}" text-anchor="middle" font-size="7" fill="#aeb8b5">${hh}h</text>`; }
+  const hs=dayEx.map(e=>e.height); const rango=hs.length?(Math.max(...hs)-Math.min(...hs)):0;
+  return `<div class="tideday"><div class="tdh">${dayLabel(day)}<span class="rng">rango ${rango.toFixed(1).replace('.',',')} m</span></div>
+    <svg class="tchart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">
+      <path d="${area}" fill="rgba(31,158,150,.12)"/>
+      <path d="${line}" fill="none" stroke="#1F9E96" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+      ${now}${ticks}${marks}
+    </svg></div>`;
 }
 function renderWeather(w){
   const d=w.daily, h=w.hourly, today=todayStr();
