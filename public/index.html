@@ -56,8 +56,8 @@
   nav.tabs{display:flex;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:14px;
     padding:5px;margin:16px auto;position:sticky;top:8px;z-index:20;box-shadow:0 6px 20px -14px rgba(0,0,0,.3)}
   nav.tabs button{
-    flex:1;border:none;background:transparent;font-family:'Inter';font-weight:700;font-size:.9rem;
-    color:var(--muted);padding:10px 4px;border-radius:10px;cursor:pointer
+    flex:1;border:none;background:transparent;font-family:'Inter';font-weight:700;font-size:.82rem;
+    color:var(--muted);padding:10px 3px;border-radius:10px;cursor:pointer
   }
   nav.tabs button.active{background:var(--sea);color:#fff}
 
@@ -141,6 +141,32 @@
   .best h4{margin:0 0 8px;font-family:'Bricolage Grotesque';color:var(--sea)}
   .best ol{margin:0;padding-left:18px;font-size:.9rem}
   .best li{margin:3px 0}
+  /* ---- COSTA: tiempo y mareas ---- */
+  .block-h{font-family:'Bricolage Grotesque';font-weight:700;color:var(--sea);font-size:1.05rem;margin:20px 0 10px}
+  .wxwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+  table.wxg{border-collapse:collapse;width:100%;min-width:540px}
+  table.wxg th,table.wxg td{text-align:center;padding:8px 6px;border-bottom:1px solid var(--line)}
+  table.wxg tr:last-child td{border-bottom:none}
+  .wxg .rl{position:sticky;left:0;background:var(--card);text-align:left;font-weight:700;
+    color:var(--muted);font-size:.72rem;z-index:2;min-width:56px;border-right:1px solid var(--line)}
+  .wxg .dname{font-family:'Bricolage Grotesque';font-weight:700;color:var(--sea);font-size:.84rem;line-height:1}
+  .wxg .ddate{font-size:.64rem;color:var(--muted);text-transform:uppercase;margin-top:2px}
+  .wxg .dmm{font-size:.66rem;color:var(--muted);margin-top:3px;white-space:nowrap}
+  .wxg .dmm b{color:var(--sea)}
+  .wxg .hic{font-size:1.3rem;line-height:1}
+  .wxg .ht{font-weight:700;color:var(--sea);font-size:.8rem;margin-top:2px}
+  .wxg td.today,.wxg th.today{background:rgba(31,158,150,.08)}
+  .wxg .warr{display:inline-block;color:var(--teal);font-size:1rem;font-weight:700}
+  .wxg .wkmh{font-size:.66rem;color:var(--muted)}
+  .wxg .rain{font-size:.74rem;font-weight:700;color:var(--sky)}
+  /* gráfica de mareas */
+  .tlink{display:block;background:#E1F0F5;color:#1c6b86;font-weight:700;font-size:.82rem;text-decoration:none;padding:11px 14px;border-radius:12px;margin-bottom:12px;border:1px solid #c7e3ec}
+  .tlink:hover{filter:brightness(.97)}
+  .tideday{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px 6px;margin-bottom:12px}
+  .tdh{font-family:'Bricolage Grotesque';font-weight:700;color:var(--sea);margin-bottom:4px;text-transform:capitalize}
+  .tdh .coef{font-family:'Inter';font-size:.72rem;font-weight:600;color:var(--muted);margin-left:8px}
+  .tchart{width:100%;height:auto;display:block}
+  .fineprint{font-size:.72rem;color:var(--muted);margin-top:14px;line-height:1.5}
 
   /* polls */
   .poll{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px 18px;margin-bottom:14px}
@@ -210,8 +236,9 @@
   </div>
   <nav class="tabs">
     <button data-tab="planes" class="active">Planes</button>
-    <button data-tab="dispo">Disponibilidad</button>
+    <button data-tab="dispo">Días</button>
     <button data-tab="votos">Votaciones</button>
+    <button data-tab="costa">Costa</button>
   </nav>
 
   <!-- PLANES -->
@@ -270,6 +297,19 @@
       </div>
     </details>
   </section>
+
+  <!-- COSTA -->
+  <section id="costa">
+    <h2 class="sec-title">Suances · mar y tiempo</h2>
+    <p class="sec-sub">El tiempo y las mareas de los próximos días, para cuadrar playa y snorkel.</p>
+    <div class="banner" id="costaLoad">Cargando el tiempo y las mareas…</div>
+    <h3 class="block-h">El tiempo</h3>
+    <div id="wx"></div>
+    <h3 class="block-h">Mareas</h3>
+    <a class="tlink" href="https://es.tideschart.com/Spain/Cantabria/Provincia-de-Cantabria/Playa-de-Tagle/" target="_blank" rel="noopener">🌊 Mareas en Playa de Tagle — tu playa →</a>
+    <a class="tlink" href="https://tablademareas.com/es/cantabria/suances" target="_blank" rel="noopener">📋 Coeficiente y horas exactas — Suances →</a>
+    <p class="fineprint">Las mareas se ven en webs especializadas (no se pueden incrustar): Playa de Tagle para tu playa, y la tabla de Suances para el coeficiente y las horas exactas. Viento en km/h.</p>
+  </section>
 </div>
 
 <div class="modal" id="iosHelp" style="display:none">
@@ -306,6 +346,7 @@ async function api(url,opts){const r=await fetch(url,opts);const j=await r.json(
 document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.toggle('active',x===b));
   document.querySelectorAll('section').forEach(s=>s.classList.toggle('active',s.id===b.dataset.tab));
+  if(b.dataset.tab==='costa') loadCosta();
   window.scrollTo({top:0,behavior:'smooth'});
 });
 
@@ -443,6 +484,65 @@ async function delPoll(id){if(!confirm('¿Borrar la votación?'))return;try{awai
 updateHint();
 load();
 setInterval(load,20000); // refresco suave para ver cambios de los demás
+
+// ---- COSTA: tiempo y mareas de Suances (Open-Meteo, sin clave) ----
+const SU_LAT=43.4356, SU_LON=-4.0473;        // Suances (tiempo)
+const SU_MLAT=43.45, SU_MLON=-4.06;          // punto marino más fiable (mareas)
+const DAYN=['dom','lun','mar','mié','jue','vie','sáb'];
+let costaLoaded=false;
+function wmo(c){
+  const m={0:['☀️','Despejado'],1:['🌤️','Poco nuboso'],2:['⛅','Nubes y claros'],3:['☁️','Nublado'],
+    45:['🌫️','Niebla'],48:['🌫️','Niebla'],51:['🌦️','Llovizna'],53:['🌦️','Llovizna'],55:['🌦️','Llovizna'],
+    61:['🌧️','Lluvia'],63:['🌧️','Lluvia'],65:['🌧️','Lluvia fuerte'],66:['🌧️','Lluvia helada'],67:['🌧️','Lluvia helada'],
+    71:['🌨️','Nieve'],73:['🌨️','Nieve'],75:['🌨️','Nieve'],77:['🌨️','Aguanieve'],
+    80:['🌦️','Chubascos'],81:['🌦️','Chubascos'],82:['⛈️','Chubascos fuertes'],85:['🌨️','Chubascos'],86:['🌨️','Chubascos'],
+    95:['⛈️','Tormenta'],96:['⛈️','Tormenta'],99:['⛈️','Tormenta']};
+  return m[c]||['🌡️','—'];
+}
+function todayStr(){return new Date().toLocaleDateString('sv');} // YYYY-MM-DD local
+function dayLabel(s){const dt=new Date(s+'T00:00');return s===todayStr()?'Hoy':DAYN[dt.getDay()]+' '+dt.getDate();}
+async function loadCosta(){
+  if(costaLoaded) return;
+  const wxU=`https://api.open-meteo.com/v1/forecast?latitude=${SU_LAT}&longitude=${SU_LON}&hourly=weather_code,temperature_2m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,wind_direction_10m_dominant&timezone=Europe%2FMadrid&forecast_days=7`;
+  try{
+    const w=await fetch(wxU).then(r=>r.json());
+    renderWeather(w);
+    document.getElementById('costaLoad').style.display='none';
+    costaLoaded=true;
+  }catch(e){
+    document.getElementById('costaLoad').textContent='No se pudo cargar el tiempo. Reinténtalo en un momento.';
+  }
+}
+function renderWeather(w){
+  const d=w.daily, h=w.hourly, today=todayStr();
+  const hmap={};
+  h.time.forEach((t,i)=>{hmap[t]={code:h.weather_code[i],temp:h.temperature_2m[i]};});
+  const days=d.time;
+  const cellHour=(day,hh)=>{
+    const e=hmap[`${day}T${hh}:00`];
+    if(!e) return '—';
+    const [ic]=wmo(e.code);
+    return `<div class="hic">${ic}</div><div class="ht">${Math.round(e.temp)}°</div>`;
+  };
+  const tdc=day=>day===today?' class="today"':'';
+  const head=days.map((day,i)=>{
+    const dt=new Date(day+'T00:00');
+    return `<th${tdc(day)}><div class="dname">${day===today?'Hoy':DAYN[dt.getDay()]}</div>
+      <div class="ddate">${dt.getDate()} ${MN[dt.getMonth()].slice(0,3)}</div>
+      <div class="dmm">↑<b>${Math.round(d.temperature_2m_max[i])}°</b> ↓${Math.round(d.temperature_2m_min[i])}°</div></th>`;
+  }).join('');
+  const hourRow=(label,hh)=>`<tr><td class="rl">${label}</td>${days.map(day=>`<td${tdc(day)}>${cellHour(day,hh)}</td>`).join('')}</tr>`;
+  const rainRow=`<tr><td class="rl">Lluvia</td>${days.map((day,i)=>`<td${tdc(day)}><span class="rain">${(d.precipitation_sum[i]??0).toFixed(1).replace('.',',')} mm</span></td>`).join('')}</tr>`;
+  const windRow=`<tr><td class="rl">Viento</td>${days.map((day,i)=>{
+    const dir=d.wind_direction_10m_dominant[i]||0;
+    return `<td${tdc(day)}><span class="warr" style="transform:rotate(${dir}deg)">↓</span><div class="wkmh">${Math.round(d.wind_speed_10m_max[i])} km/h</div></td>`;
+  }).join('')}</tr>`;
+  document.getElementById('wx').innerHTML=
+    `<div class="wxwrap"><table class="wxg">
+      <thead><tr><th class="rl"></th>${head}</tr></thead>
+      <tbody>${hourRow('08:00','08')}${hourRow('14:00','14')}${hourRow('20:00','20')}${rainRow}${windRow}</tbody>
+    </table></div>`;
+}
 
 // Service worker: hace la web instalable en el móvil
 if('serviceWorker' in navigator){
