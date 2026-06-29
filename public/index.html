@@ -215,16 +215,16 @@
     <div class="who">
       <select id="name" autocomplete="off">
         <option value="" disabled selected>Elige tu nombre</option>
-        <option>Daniel</option>
-        <option>Marta</option>
-        <option>Eva</option>
+        <option>Alex</option>
+        <option>Barbero</option>
         <option>Camilo</option>
+        <option>Daniel</option>
+        <option>Eva</option>
+        <option>Julia</option>
+        <option>Marta</option>
+        <option>Nacho</option>
         <option>Pablo</option>
         <option>Sara</option>
-        <option>Nacho</option>
-        <option>Alex</option>
-        <option>Julia</option>
-        <option>Barbero</option>
       </select>
       <span id="whoHint"></span>
     </div>
@@ -462,7 +462,7 @@ function renderBest(oth){
   }
   const miss=notMarked();
   if(miss.length){
-    html+=`<div class="miss"><h4>Falta por marcar</h4><p><b>${miss.join(', ')}</b>💩</p></div>`;
+    html+=`<div class="miss"><h4>Falta por marcar</h4><p><b>${miss.join(', ')}</b> 💩</p></div>`;
   }
   b.innerHTML=html;
 }
