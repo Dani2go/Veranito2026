@@ -66,6 +66,8 @@
   @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1}}
   .sec-title{font-family:'Bricolage Grotesque';font-weight:700;color:var(--sea);font-size:1.3rem;margin:6px 0 4px}
   .sec-sub{color:var(--muted);font-size:.88rem;margin:0 0 16px}
+  .agua{margin:-6px 0 14px}
+  .agua-pill{display:inline-block;font-weight:800;font-size:.92rem;padding:7px 13px;border-radius:999px}
 
   /* plan cards */
   .plan{
@@ -305,6 +307,7 @@
   <section id="costa">
     <h2 class="sec-title">Suances · mar y tiempo</h2>
     <p class="sec-sub">El tiempo y las mareas de los próximos días, para cuadrar playa y snorkel.</p>
+    <div id="agua" class="agua"></div>
     <div class="banner" id="costaLoad">Cargando el tiempo y las mareas…</div>
     <h3 class="block-h">El tiempo</h3>
     <div id="wx"></div>
@@ -513,6 +516,7 @@ setInterval(load,20000); // refresco suave para ver cambios de los demás
 
 // ---- COSTA: tiempo y mareas de Suances (Open-Meteo, sin clave) ----
 const SU_LAT=43.4356, SU_LON=-4.0473;        // Suances (tiempo)
+const AGUA_OFFSET=0;                          // corrección °C sobre el modelo (mar abierto suele leer más cálido que la orilla)
 const SU_MLAT=43.45, SU_MLON=-4.06;          // punto marino más fiable (mareas)
 const DAYN=['dom','lun','mar','mié','jue','vie','sáb'];
 let costaLoaded=false;
@@ -539,6 +543,30 @@ async function loadCosta(){
     document.getElementById('costaLoad').textContent='No se pudo cargar el tiempo. Reinténtalo en un momento.';
   }
   loadTides();
+  loadAgua();
+}
+function aguaLabel(t){
+  if(t==null||isNaN(t)) return null;
+  if(t<14)   return {t:'fría de cojones',e:'🥶',c:'#2E8FB0',bg:'#E1F0F5'};
+  if(t<16.5) return {t:'fría',e:'❄️',c:'#3D5A80',bg:'#E7ECF4'};
+  if(t<18.5) return {t:'OK',e:'👌',c:'#4f8a5f',bg:'#E9F2E6'};
+  if(t<20.5) return {t:'buena',e:'😎',c:'#1F9E96',bg:'#E1F1EF'};
+  return {t:'pis de gato',e:'🐱',c:'#c07a1e',bg:'#FBF1E1'};
+}
+async function loadAgua(){
+  const box=document.getElementById('agua'); if(!box) return;
+  try{
+    const u=`https://marine-api.open-meteo.com/v1/marine?latitude=${SU_LAT}&longitude=${SU_LON}&hourly=sea_surface_temperature&timezone=Europe%2FMadrid&forecast_days=1`;
+    const d=await fetch(u).then(r=>r.json());
+    const h=d.hourly||{}, arr=h.sea_surface_temperature||[], times=h.time||[];
+    const nowH=new Date().toLocaleString('sv',{timeZone:'Europe/Madrid'}).slice(0,13); // YYYY-MM-DD HH
+    let val=null;
+    for(let i=0;i<times.length;i++){ if(times[i].replace('T',' ').slice(0,13)===nowH && arr[i]!=null){ val=arr[i]; break; } }
+    if(val==null){ const v=arr.filter(x=>x!=null); if(v.length) val=v.reduce((a,b)=>a+b,0)/v.length; }
+    const lab=aguaLabel(val==null?null:val+AGUA_OFFSET);
+    if(!lab){ box.innerHTML=''; return; }
+    box.innerHTML=`<span class="agua-pill" style="color:${lab.c};background:${lab.bg}">🌡️ Agua: ${lab.e} ${lab.t}</span>`;
+  }catch(e){ box.innerHTML=''; }
 }
 async function loadTides(){
   try{
