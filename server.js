@@ -34,6 +34,8 @@ const SEED = [
   ["ramales", "Cuevas de Ramales", "🦌", "Visita a las cuevas de Ramales de la Victoria (Covalanas / Cullalvera): arte rupestre y geología. Reservar la visita guiada.", "Ramales de la Victoria", "entrada ~15 €", "sun", "Alex"],
   ["snorkel", "Snorkel en Punta Ballota", "🤿", "Snorkel y playa en Punta Ballota, en Suances. Trae gafas y tubo.", "Suances", "gratis", "sky", "Daniel"],
   ["getaria", "Getaria y noche en Donosti", "🐟", "Homenaje de pescado a la brasa en Getaria y, si apetece, noche de mamoneo por Donosti. Lo de la noche es opcional, pero redondea el plan.", "Getaria (Gipuzkoa)", "comida ~60 € · noche en Donosti aparte", "navy", "Camilo"],
+  ["bonito", "Barbacoa de bonito", "🐟", "Barbacoa de bonito coincidiendo con el España–Bélgica de cuartos del Mundial. Pescado a la brasa y partidazo.", "", "Vie 10 jul · con el Mundial", "sky", "Daniel"],
+  ["asado", "Asado en la lleldería", "🥩", "Una propuesta inspirada en los grandes espacios abiertos de la Patagonia y en las formas más primitivas y auténticas de cocinar al fuego. Sandialito nos acercará a una cocina ligada al territorio, a los animales criados en libertad y a las técnicas tradicionales de asado que han acompañado durante siglos a pastores, gauchos y pobladores patagónicos. Carnes cocinadas lentamente, aromas de leña, sabores intensos y una experiencia que busca conectar con el origen más esencial de la cocina: el encuentro entre el producto, el fuego y el paisaje. Horario 13:30 h · Duración 4,5 h.", "", "55 € (bebida incluida)", "ember", "Camilo"],
 ];
 
 async function init() {
