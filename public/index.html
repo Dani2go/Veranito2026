@@ -102,6 +102,29 @@
   .del{background:none;border:none;color:#C2BBA6;cursor:pointer;font-size:.8rem;font-weight:600}
   .del:hover{color:var(--ember)}
 
+  /* eventos hechos */
+  .plan.isdone{opacity:.98}
+  .donebadge{margin-left:auto;background:#E9F2E6;color:#3f7a4e;font-weight:800;font-size:.72rem;padding:4px 9px;border-radius:999px;white-space:nowrap}
+  .plan .head{display:flex;align-items:center;gap:9px}
+  .donebox{margin-top:14px;border-top:1px dashed var(--line);padding-top:12px;display:flex;flex-direction:column;gap:14px}
+  .dsec h4{margin:0 0 8px;font-family:'Bricolage Grotesque';color:var(--sea);font-size:.98rem}
+  .dsec h4 .attn{background:var(--c);color:#fff;border-radius:999px;font-size:.72rem;padding:1px 8px;margin-left:4px}
+  .attchips{display:flex;flex-wrap:wrap;gap:6px}
+  .attchip{border:1.5px solid var(--line);background:#fff;color:var(--muted);font-weight:700;font-size:.8rem;padding:5px 11px;border-radius:999px;cursor:pointer}
+  .attchip.on{background:var(--c);border-color:var(--c);color:#fff}
+  .memgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .memitem{position:relative;margin:0;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .memitem img{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:#eee}
+  .memitem .note{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:1.8rem;background:#F6EEDD}
+  .memitem figcaption{padding:6px 8px;font-size:.72rem;line-height:1.3;color:var(--sea)}
+  .memitem .cap{display:block;font-weight:600}
+  .memitem .au{color:var(--muted);font-size:.68rem}
+  .memdel{position:absolute;top:4px;right:4px;width:22px;height:22px;border:none;border-radius:50%;background:rgba(11,62,69,.62);color:#fff;font-size:.72rem;line-height:1;cursor:pointer}
+  .memempty{font-size:.85rem;color:var(--muted);margin:0}
+  .memadd{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center}
+  .mfile{font-size:.8rem;max-width:100%}
+  .minput{flex:1;min-width:140px;border:1.5px solid var(--line);border-radius:10px;padding:8px 11px;font-family:'Inter';font-size:.85rem}
+
   /* forms */
   .addcard{background:var(--card);border:1.5px dashed var(--line);border-radius:18px;padding:16px 18px;margin-bottom:14px}
   .addcard summary{font-family:'Bricolage Grotesque';font-weight:700;color:var(--sea);cursor:pointer;list-style:none;font-size:1.05rem}
@@ -361,32 +384,113 @@ async function load(){
   // mis días desde lo guardado
   const me=myName();
   mine=new Set(me&&DATA.availability[me]?DATA.availability[me]:[]);
-  renderPlans();renderCalendar();renderPolls();updateHint();
+  renderPlans(true);renderCalendar();renderPolls();updateHint();
+}
+// ¿hay un formulario de recuerdo a medias? (para no pisarlo en el auto-refresco)
+function memFormBusy(){
+  return [...document.querySelectorAll('.mfile')].some(f=>f.files&&f.files.length)
+      || [...document.querySelectorAll('.minput')].some(i=>i.value.trim());
 }
 
 /* ---------- PLANES ---------- */
-function renderPlans(){
+function renderPlans(auto){
+  if(auto && memFormBusy()) return;            // no pisar una subida a medias
   const me=myName();
   document.getElementById('planList').innerHTML=DATA.plans.map(p=>{
     const joined=p.signups.includes(me)&&me;
     const ppl=p.signups.length?`<div class="ppl">${p.signups.map(n=>`<span class="nm">${esc(n)}</span>`).join('')}</div>`:'';
-    return `<article class="plan" data-c="${p.color||'teal'}">
-      <div class="head"><span class="emoji">${esc(p.emoji||'📍')}</span><h3>${esc(p.title)}</h3></div>
+    const done=!!p.done;
+    return `<article class="plan${done?' isdone':''}" data-c="${p.color||'teal'}">
+      <div class="head"><span class="emoji">${esc(p.emoji||'📍')}</span><h3>${esc(p.title)}</h3>${done?'<span class="donebadge">✅ Hecho</span>':''}</div>
       ${p.description?`<p class="desc">${esc(p.description)}</p>`:''}
       <div class="meta">
         ${p.location?`<span class="chip where">📍 ${esc(p.location)}</span>`:''}
         ${p.price?`<span class="chip price">${esc(p.price)}</span>`:''}
       </div>
       ${ppl}
+      ${done?doneSections(p):''}
       <div class="foot">
         <span class="count">${p.signups.length} apuntad${p.signups.length===1?'o/a':'os/as'}${p.created_by?' · propuesto por '+esc(p.created_by):''}</span>
         <span>
+          <button class="del" onclick="toggleDone(${p.id})">${done?'reabrir':'marcar hecho'}</button>
           ${!p.fixed?`<button class="del" onclick="delPlan(${p.id})">borrar</button> `:''}
           <button class="btn ${joined?'out':''}" onclick="togglePlan(${p.id})">${joined?'✓ Apuntado':'Apuntarme'}</button>
         </span>
       </div>
     </article>`;
   }).join('');
+}
+function doneSections(p){
+  const att=p.attendance||[], mem=p.memories||[];
+  const chips=members().map(n=>{
+    const on=att.includes(n);
+    return `<button class="attchip${on?' on':''}" onclick="toggleAtt(${p.id},'${jsstr(n)}')">${on?'✓ ':''}${esc(n)}</button>`;
+  }).join('');
+  const gallery=mem.length
+    ? `<div class="memgrid">${mem.map(memCard).join('')}</div>`
+    : `<p class="memempty">Aún no hay recuerdos. ¡Sube el primero! 📸</p>`;
+  return `<div class="donebox">
+    <div class="dsec">
+      <h4>Fueron finalmente <span class="attn">${att.length}</span></h4>
+      <div class="attchips">${chips}</div>
+    </div>
+    <div class="dsec">
+      <h4>Recuerdos del día</h4>
+      ${gallery}
+      <div class="memadd">
+        <input type="file" accept="image/*" id="mf_${p.id}" class="mfile">
+        <input type="text" id="mc_${p.id}" class="minput" placeholder="Pie de foto o nota (opcional)" maxlength="300">
+        <button class="btn" onclick="addMemory(${p.id})">Subir recuerdo</button>
+      </div>
+    </div>
+  </div>`;
+}
+function memCard(m){
+  const meta=(m.caption?`<span class="cap">${esc(m.caption)}</span>`:'')+(m.author?`<span class="au">— ${esc(m.author)}</span>`:'');
+  const media=m.hasPhoto
+    ? `<img loading="lazy" src="/api/memories/${m.id}/photo" alt="recuerdo">`
+    : `<div class="note">📝</div>`;
+  return `<figure class="memitem">${media}<figcaption>${meta||'&nbsp;'}</figcaption><button class="memdel" title="Borrar" onclick="delMemory(${m.id})">✕</button></figure>`;
+}
+function jsstr(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+async function toggleDone(id){
+  try{await api(`/api/plans/${id}/done`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({})});await load();}
+  catch(e){toast(e.message);}
+}
+async function toggleAtt(id,name){
+  try{await api(`/api/plans/${id}/attendance`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})});await load();}
+  catch(e){toast(e.message);}
+}
+async function delMemory(id){
+  if(!confirm('¿Borrar este recuerdo?'))return;
+  try{await api(`/api/memories/${id}`,{method:'DELETE'});await load();}
+  catch(e){toast(e.message);}
+}
+function compressImage(file){
+  return new Promise((resolve,reject)=>{
+    const img=new Image(), url=URL.createObjectURL(file);
+    img.onload=()=>{
+      URL.revokeObjectURL(url);
+      const max=1280; let w=img.width,h=img.height;
+      if(w>h && w>max){h=Math.round(h*max/w);w=max;} else if(h>w && h>max){w=Math.round(w*max/h);h=max;} else if(w===h && w>max){w=h=max;}
+      const c=document.createElement('canvas');c.width=w;c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      resolve(c.toDataURL('image/jpeg',0.72));
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('img'));};
+    img.src=url;
+  });
+}
+async function addMemory(pid){
+  const f=document.getElementById('mf_'+pid), cap=(document.getElementById('mc_'+pid).value||'').trim();
+  const file=f&&f.files&&f.files[0];
+  if(!file && !cap) return toast('Elige una foto o escribe una nota');
+  let photo=null;
+  if(file){ try{ photo=await compressImage(file); }catch(_){ return toast('No se pudo procesar la foto'); } }
+  try{
+    await api(`/api/plans/${pid}/memories`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({author:myName(),caption:cap,photo})});
+    toast('Recuerdo subido 📸'); await load();
+  }catch(e){ toast(e.message); }
 }
 async function togglePlan(id){
   if(!myName())return toast('Elige tu nombre arriba');
