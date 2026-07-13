@@ -104,6 +104,14 @@ async function init() {
       mime TEXT DEFAULT 'image/jpeg',
       created_at TIMESTAMPTZ DEFAULT now()
     );
+    CREATE TABLE IF NOT EXISTS expenses (
+      id SERIAL PRIMARY KEY,
+      plan_id INTEGER REFERENCES plans(id) ON DELETE CASCADE,
+      payer TEXT NOT NULL,
+      amount NUMERIC(10,2) NOT NULL,
+      concept TEXT DEFAULT '',
+      created_at TIMESTAMPTZ DEFAULT now()
+    );
   `);
 
   // Sincroniza los planes fijos desde el código en cada arranque.
@@ -188,6 +196,7 @@ app.get("/api/data", async (_req, res) => {
     const signups = (await pool.query("SELECT plan_id, name FROM signups ORDER BY id")).rows;
     const attend = (await pool.query("SELECT plan_id, name FROM attendance ORDER BY id")).rows;
     const mems = (await pool.query("SELECT id, plan_id, author, caption, (photo IS NOT NULL) AS has_photo, to_char(created_at,'YYYY-MM-DD') AS day FROM memories ORDER BY id")).rows;
+    const exps = (await pool.query("SELECT id, plan_id, payer, amount, concept FROM expenses ORDER BY id")).rows;
     const avail = (await pool.query("SELECT name, to_char(day,'YYYY-MM-DD') AS day FROM availability")).rows;
     const polls = (await pool.query("SELECT * FROM polls ORDER BY created_at DESC")).rows;
     const options = (await pool.query("SELECT * FROM poll_options ORDER BY id")).rows;
@@ -198,6 +207,7 @@ app.get("/api/data", async (_req, res) => {
       signups: signups.filter((s) => s.plan_id === p.id).map((s) => s.name),
       attendance: attend.filter((a) => a.plan_id === p.id).map((a) => a.name),
       memories: mems.filter((m) => m.plan_id === p.id).map((m) => ({ id: m.id, author: m.author, caption: m.caption, hasPhoto: m.has_photo, day: m.day })),
+      expenses: exps.filter((e) => e.plan_id === p.id).map((e) => ({ id: e.id, payer: e.payer, amount: Number(e.amount), concept: e.concept })),
     }));
     const availability = {};
     avail.forEach((a) => {
@@ -347,6 +357,37 @@ app.get("/api/memories/:id/photo", async (req, res) => {
 app.delete("/api/memories/:id", async (req, res) => {
   try {
     await pool.query("DELETE FROM memories WHERE id=$1", [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: "No se pudo borrar" });
+  }
+});
+
+// Añadir un gasto a un evento
+app.post("/api/plans/:id/expenses", async (req, res) => {
+  try {
+    const pid = req.params.id;
+    const payer = clean(req.body.payer, 40);
+    const concept = clean(req.body.concept, 60);
+    let amount = Number(req.body.amount);
+    if (!payer) return res.status(400).json({ error: "Falta quién pagó" });
+    if (!isFinite(amount) || amount <= 0) return res.status(400).json({ error: "Importe no válido" });
+    amount = Math.round(amount * 100) / 100;
+    const { rows } = await pool.query(
+      "INSERT INTO expenses (plan_id, payer, amount, concept) VALUES ($1,$2,$3,$4) RETURNING id",
+      [pid, payer, amount, concept]
+    );
+    res.json({ ok: true, id: rows[0].id });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "No se pudo añadir el gasto" });
+  }
+});
+
+// Borrar un gasto
+app.delete("/api/expenses/:id", async (req, res) => {
+  try {
+    await pool.query("DELETE FROM expenses WHERE id=$1", [req.params.id]);
     res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ error: "No se pudo borrar" });
