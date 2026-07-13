@@ -112,6 +112,8 @@
   .attchips{display:flex;flex-wrap:wrap;gap:6px}
   .attchip{border:1.5px solid var(--line);background:#fff;color:var(--muted);font-weight:700;font-size:.8rem;padding:5px 11px;border-radius:999px;cursor:pointer}
   .attchip.on{background:var(--c);border-color:var(--c);color:#fff}
+  .attchip.guest{background:var(--plum);border-color:var(--plum);color:#fff}
+  .guestadd{display:flex;gap:8px;margin-top:9px;align-items:center}
   .memgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
   .memitem{position:relative;margin:0;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
   .memitem img{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:#eee}
@@ -125,6 +127,27 @@
   .mfile{font-size:.8rem;max-width:100%}
   .minput{flex:1;min-width:140px;border:1.5px solid var(--line);border-radius:10px;padding:8px 11px;font-family:'Inter';font-size:.85rem}
   .memitem img{cursor:zoom-in}
+
+  /* cuentas / splitwise */
+  .csub{font-size:.8rem;color:var(--muted);margin:0 0 8px;font-weight:600}
+  .explist{list-style:none;margin:0 0 10px;padding:0;display:flex;flex-direction:column;gap:5px}
+  .explist li{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:7px 11px;font-size:.84rem;color:var(--sea)}
+  .expx{border:none;background:none;color:#C2BBA6;cursor:pointer;font-size:.8rem}
+  .expx:hover{color:var(--ember)}
+  .balances{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+  .bal{display:flex;justify-content:space-between;font-size:.84rem;padding:3px 2px}
+  .bal span:first-child{font-weight:700;color:var(--sea)}
+  .bal.pos span:last-child{color:#3f7a4e;font-weight:700}
+  .bal.neg span:last-child{color:var(--ember);font-weight:700}
+  .bal.zero span:last-child{color:var(--muted)}
+  .settle{background:#F0F6F4;border:1px solid #d6e7e2;border-radius:12px;padding:10px 12px;margin-bottom:10px}
+  .settle h5{margin:0 0 6px;font-family:'Bricolage Grotesque';color:var(--teal);font-size:.86rem}
+  .setrow{display:flex;justify-content:space-between;font-size:.86rem;color:var(--sea);padding:2px 0}
+  .setamt{font-weight:800}
+  .allpaid{color:#3f7a4e;font-weight:700;font-size:.86rem;margin:0 0 10px}
+  .expadd{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .expsel{border:1.5px solid var(--line);border-radius:10px;padding:8px 11px;font-family:'Inter';font-size:.85rem;background:#fff}
+  .expamt{max-width:80px}.expcon{flex:1;min-width:120px}
 
   /* sub-pestañas planes */
   .segtabs{display:flex;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:14px}
@@ -422,7 +445,7 @@ async function load(){
   // mis días desde lo guardado
   const me=myName();
   mine=new Set(me&&DATA.availability[me]?DATA.availability[me]:[]);
-  renderPlans(true);renderCalendar();renderPolls();updateHint();
+  renderPlans();renderCalendar();renderPolls();updateHint();
 }
 // ¿hay un formulario de recuerdo a medias? (para no pisarlo en el auto-refresco)
 function memFormBusy(){
@@ -484,17 +507,25 @@ function renderPlans(auto){
 function setPlanFilter(f){ planFilter=f; renderPlans(); }
 function doneSections(p){
   const att=p.attendance||[], mem=p.memories||[];
-  const chips=members().map(n=>{
+  const mem_names=members();
+  const memberChips=mem_names.map(n=>{
     const on=att.includes(n);
     return `<button class="attchip${on?' on':''}" onclick="toggleAtt(${p.id},'${jsstr(n)}')">${on?'✓ ':''}${esc(n)}</button>`;
   }).join('');
+  const guests=att.filter(n=>!mem_names.includes(n));
+  const guestChips=guests.map(n=>`<button class="attchip on guest" title="Quitar invitado/a" onclick="toggleAtt(${p.id},'${jsstr(n)}')">${esc(n)} ✕</button>`).join('');
+  const guestAdd=`<div class="guestadd">
+    <input id="ga_${p.id}" class="minput" placeholder="Añadir invitado/a de fuera" maxlength="40">
+    <button class="btn ghost" onclick="addGuest(${p.id})">+ invitado/a</button>
+  </div>`;
   const gallery=mem.length
     ? `<div class="memgrid">${mem.map(m=>memCard(p.id,m)).join('')}</div>`
     : `<p class="memempty">Aún no hay recuerdos. ¡Sube el primero! 📸</p>`;
   return `<div class="donebox">
     <div class="dsec">
       <h4>Fueron finalmente <span class="attn">${att.length}</span></h4>
-      <div class="attchips">${chips}</div>
+      <div class="attchips">${memberChips}${guestChips}</div>
+      ${guestAdd}
     </div>
     <div class="dsec">
       <h4>Recuerdos del día</h4>
@@ -505,6 +536,7 @@ function doneSections(p){
         <button class="btn" onclick="addMemory(${p.id})">Subir recuerdo</button>
       </div>
     </div>
+    ${cuentasBlock(p)}
   </div>`;
 }
 function memCard(pid,m){
@@ -525,6 +557,14 @@ async function toggleDone(id){
 }
 async function toggleAtt(id,name){
   try{await api(`/api/plans/${id}/attendance`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})});await load();}
+  catch(e){toast(e.message);}
+}
+async function addGuest(pid){
+  const el=document.getElementById('ga_'+pid); const name=(el.value||'').trim();
+  if(!name) return toast('Escribe el nombre del invitado/a');
+  const p=DATA.plans.find(x=>x.id===pid);
+  if(p&&(p.attendance||[]).some(n=>n.toLowerCase()===name.toLowerCase())) return toast('Ese nombre ya está');
+  try{await api(`/api/plans/${pid}/attendance`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})});await load();}
   catch(e){toast(e.message);}
 }
 async function delMemory(id){
@@ -558,6 +598,62 @@ async function addMemory(pid){
     toast('Recuerdo subido 📸'); await load();
   }catch(e){ toast(e.message); }
 }
+/* ---------- CUENTAS (reparto a partes iguales entre asistentes) ---------- */
+function eur(x){return (Math.round(x*100)/100).toFixed(2).replace('.',',')+' €';}
+function cuentasCalc(p){
+  const att=p.attendance||[], exps=p.expenses||[];
+  const total=exps.reduce((s,e)=>s+(e.amount||0),0);
+  const share=att.length?total/att.length:0;
+  const people=[...new Set([...att, ...exps.map(e=>e.payer)])];
+  const paid={}; people.forEach(a=>paid[a]=0);
+  exps.forEach(e=>{ paid[e.payer]=(paid[e.payer]||0)+e.amount; });
+  const net={}; people.forEach(a=> net[a]=(paid[a]||0)-(att.includes(a)?share:0));
+  return {total,share,net,people};
+}
+function settle(net){
+  const cred=[],deb=[];
+  Object.entries(net).forEach(([k,v])=>{const r=Math.round(v*100)/100; if(r>0.005)cred.push([k,r]); else if(r<-0.005)deb.push([k,-r]);});
+  cred.sort((a,b)=>b[1]-a[1]); deb.sort((a,b)=>b[1]-a[1]);
+  const res=[]; let i=0,j=0;
+  while(i<deb.length&&j<cred.length){
+    const pay=Math.min(deb[i][1],cred[j][1]);
+    res.push([deb[i][0],cred[j][0],Math.round(pay*100)/100]);
+    deb[i][1]-=pay; cred[j][1]-=pay;
+    if(deb[i][1]<0.005)i++; if(cred[j][1]<0.005)j++;
+  }
+  return res;
+}
+function cuentasBlock(p){
+  const att=p.attendance||[], exps=p.expenses||[];
+  if(!att.length) return `<div class="dsec"><h4>Cuentas</h4><p class="memempty">Marca quién fue para poder repartir gastos.</p></div>`;
+  const {total,share,net}=cuentasCalc(p);
+  const explist=exps.length?`<ul class="explist">${exps.map(e=>`<li><span><b>${esc(e.payer)}</b> puso <b>${eur(e.amount)}</b>${e.concept?' · '+esc(e.concept):''}</span><button class="expx" title="Borrar" onclick="delExpense(${e.id})">✕</button></li>`).join('')}</ul>`:'';
+  const balances=exps.length?`<div class="balances">${att.map(a=>{const v=net[a]||0;const cls=v>0.005?'pos':(v<-0.005?'neg':'zero');const t=v>0.005?('le deben '+eur(v)):(v<-0.005?('debe '+eur(-v)):'en paz');return `<div class="bal ${cls}"><span>${esc(a)}</span><span>${t}</span></div>`;}).join('')}</div>`:'';
+  const sett=exps.length?settle(net):[];
+  const setHtml=sett.length?`<div class="settle"><h5>Para quedar en paz</h5>${sett.map(([d,c,a])=>`<div class="setrow"><span><b>${esc(d)}</b> → <b>${esc(c)}</b></span><span class="setamt">${eur(a)}</span></div>`).join('')}</div>`:(exps.length?`<p class="allpaid">✅ Todo cuadrado</p>`:'');
+  const opts=att.map(a=>`<option>${esc(a)}</option>`).join('');
+  const form=`<div class="expadd">
+    <select id="ep_${p.id}" class="expsel">${opts}</select>
+    <input id="ea_${p.id}" class="minput expamt" inputmode="decimal" placeholder="€">
+    <input id="ec_${p.id}" class="minput expcon" placeholder="Concepto (ej: carne)" maxlength="60">
+    <button class="btn" onclick="addExpense(${p.id})">Añadir gasto</button>
+  </div>`;
+  return `<div class="dsec">
+    <h4>Cuentas${exps.length?` <span class="attn">${eur(total)}</span>`:''}</h4>
+    ${exps.length?`<p class="csub">${eur(total)} entre ${att.length} · ${eur(share)} por cabeza</p>`:'<p class="memempty">Aún no hay gastos. Añade el primero 👇</p>'}
+    ${explist}${balances}${setHtml}${form}
+  </div>`;
+}
+async function addExpense(pid){
+  const payer=document.getElementById('ep_'+pid).value;
+  const amount=parseFloat((document.getElementById('ea_'+pid).value||'').replace(',','.').trim());
+  const concept=(document.getElementById('ec_'+pid).value||'').trim();
+  if(!payer) return toast('¿Quién pagó?');
+  if(!(amount>0)) return toast('Pon un importe válido');
+  try{ await api(`/api/plans/${pid}/expenses`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payer,amount,concept})}); toast('Gasto añadido 💸'); await load(); }
+  catch(e){ toast(e.message); }
+}
+async function delExpense(id){ if(!confirm('¿Borrar este gasto?'))return; try{await api(`/api/expenses/${id}`,{method:'DELETE'});await load();}catch(e){toast(e.message);} }
 async function togglePlan(id){
   if(!myName())return toast('Elige tu nombre arriba');
   try{await api(`/api/plans/${id}/toggle`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:myName()})});await load();}
@@ -732,7 +828,7 @@ async function delPoll(id){if(!confirm('¿Borrar la votación?'))return;try{awai
 
 updateHint();
 load();
-setInterval(load,20000); // refresco suave para ver cambios de los demás
+setInterval(()=>{ if(!memFormBusy()) load(); },20000); // refresco suave (no pisa formularios a medias)
 
 // ---- COSTA: tiempo y mareas de Suances (Open-Meteo, sin clave) ----
 const SU_LAT=43.4356, SU_LON=-4.0473;        // Suances (tiempo)
