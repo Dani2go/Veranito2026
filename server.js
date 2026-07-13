@@ -3,7 +3,7 @@ const path = require("path");
 const { Pool } = require("pg");
 
 const app = express();
-app.use(express.json({ limit: "200kb" }));
+app.use(express.json({ limit: "8mb" }));
 app.use(express.static(path.join(__dirname, "public")));
 
 // ---------- Base de datos ----------
@@ -87,6 +87,23 @@ async function init() {
       data JSONB NOT NULL,
       fetched_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
+    ALTER TABLE plans ADD COLUMN IF NOT EXISTS done BOOLEAN DEFAULT false;
+    ALTER TABLE plans ADD COLUMN IF NOT EXISTS done_at TIMESTAMPTZ;
+    CREATE TABLE IF NOT EXISTS attendance (
+      id SERIAL PRIMARY KEY,
+      plan_id INTEGER REFERENCES plans(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      UNIQUE(plan_id, name)
+    );
+    CREATE TABLE IF NOT EXISTS memories (
+      id SERIAL PRIMARY KEY,
+      plan_id INTEGER REFERENCES plans(id) ON DELETE CASCADE,
+      author TEXT DEFAULT '',
+      caption TEXT DEFAULT '',
+      photo BYTEA,
+      mime TEXT DEFAULT 'image/jpeg',
+      created_at TIMESTAMPTZ DEFAULT now()
+    );
   `);
 
   // Sincroniza los planes fijos desde el código en cada arranque.
@@ -169,6 +186,8 @@ app.get("/api/data", async (_req, res) => {
   try {
     const plans = (await pool.query("SELECT * FROM plans ORDER BY fixed DESC, id ASC")).rows;
     const signups = (await pool.query("SELECT plan_id, name FROM signups ORDER BY id")).rows;
+    const attend = (await pool.query("SELECT plan_id, name FROM attendance ORDER BY id")).rows;
+    const mems = (await pool.query("SELECT id, plan_id, author, caption, (photo IS NOT NULL) AS has_photo, to_char(created_at,'YYYY-MM-DD') AS day FROM memories ORDER BY id")).rows;
     const avail = (await pool.query("SELECT name, to_char(day,'YYYY-MM-DD') AS day FROM availability")).rows;
     const polls = (await pool.query("SELECT * FROM polls ORDER BY created_at DESC")).rows;
     const options = (await pool.query("SELECT * FROM poll_options ORDER BY id")).rows;
@@ -177,6 +196,8 @@ app.get("/api/data", async (_req, res) => {
     const planList = plans.map((p) => ({
       ...p,
       signups: signups.filter((s) => s.plan_id === p.id).map((s) => s.name),
+      attendance: attend.filter((a) => a.plan_id === p.id).map((a) => a.name),
+      memories: mems.filter((m) => m.plan_id === p.id).map((m) => ({ id: m.id, author: m.author, caption: m.caption, hasPhoto: m.has_photo, day: m.day })),
     }));
     const availability = {};
     avail.forEach((a) => {
@@ -247,6 +268,88 @@ app.post("/api/plans/:id/toggle", async (req, res) => {
     }
   } catch (e) {
     res.status(500).json({ error: "No se pudo actualizar" });
+  }
+});
+
+// Marcar / desmarcar un plan como hecho
+app.post("/api/plans/:id/done", async (req, res) => {
+  try {
+    const pid = req.params.id;
+    const cur = await pool.query("SELECT done FROM plans WHERE id=$1", [pid]);
+    if (!cur.rowCount) return res.status(404).json({ error: "No existe" });
+    const nd = !cur.rows[0].done;
+    await pool.query("UPDATE plans SET done=$1, done_at=CASE WHEN $1 THEN now() ELSE NULL END WHERE id=$2", [nd, pid]);
+    res.json({ ok: true, done: nd });
+  } catch (e) {
+    res.status(500).json({ error: "No se pudo actualizar" });
+  }
+});
+
+// Marcar quién asistió finalmente (toggle por nombre)
+app.post("/api/plans/:id/attendance", async (req, res) => {
+  try {
+    const name = clean(req.body.name, 40);
+    if (!name) return res.status(400).json({ error: "Falta el nombre" });
+    const pid = req.params.id;
+    const ex = await pool.query("SELECT 1 FROM attendance WHERE plan_id=$1 AND name=$2", [pid, name]);
+    if (ex.rowCount) {
+      await pool.query("DELETE FROM attendance WHERE plan_id=$1 AND name=$2", [pid, name]);
+      res.json({ ok: true, there: false });
+    } else {
+      await pool.query("INSERT INTO attendance (plan_id, name) VALUES ($1,$2) ON CONFLICT DO NOTHING", [pid, name]);
+      res.json({ ok: true, there: true });
+    }
+  } catch (e) {
+    res.status(500).json({ error: "No se pudo actualizar" });
+  }
+});
+
+// Subir un recuerdo (foto en base64 y/o nota)
+app.post("/api/plans/:id/memories", async (req, res) => {
+  try {
+    const pid = req.params.id;
+    const author = clean(req.body.author, 40);
+    const caption = clean(req.body.caption, 300);
+    let buf = null, mime = "image/jpeg";
+    if (req.body.photo) {
+      const m = /^data:(image\/[\w.+-]+);base64,(.+)$/s.exec(req.body.photo);
+      if (!m) return res.status(400).json({ error: "Foto no válida" });
+      mime = m[1];
+      buf = Buffer.from(m[2], "base64");
+      if (buf.length > 3 * 1024 * 1024) return res.status(413).json({ error: "La foto pesa demasiado" });
+    }
+    if (!buf && !caption) return res.status(400).json({ error: "Pon una foto o una nota" });
+    const { rows } = await pool.query(
+      "INSERT INTO memories (plan_id, author, caption, photo, mime) VALUES ($1,$2,$3,$4,$5) RETURNING id",
+      [pid, author, caption, buf, mime]
+    );
+    res.json({ ok: true, id: rows[0].id });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "No se pudo guardar el recuerdo" });
+  }
+});
+
+// Servir la foto de un recuerdo
+app.get("/api/memories/:id/photo", async (req, res) => {
+  try {
+    const { rows } = await pool.query("SELECT photo, mime FROM memories WHERE id=$1", [req.params.id]);
+    if (!rows.length || !rows[0].photo) return res.status(404).end();
+    res.set("Content-Type", rows[0].mime || "image/jpeg");
+    res.set("Cache-Control", "public, max-age=31536000, immutable");
+    res.send(rows[0].photo);
+  } catch (e) {
+    res.status(500).end();
+  }
+});
+
+// Borrar un recuerdo
+app.delete("/api/memories/:id", async (req, res) => {
+  try {
+    await pool.query("DELETE FROM memories WHERE id=$1", [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: "No se pudo borrar" });
   }
 });
 
