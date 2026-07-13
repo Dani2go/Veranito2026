@@ -124,6 +124,29 @@
   .memadd{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center}
   .mfile{font-size:.8rem;max-width:100%}
   .minput{flex:1;min-width:140px;border:1.5px solid var(--line);border-radius:10px;padding:8px 11px;font-family:'Inter';font-size:.85rem}
+  .memitem img{cursor:zoom-in}
+
+  /* sub-pestañas planes */
+  .segtabs{display:flex;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:14px}
+  .segbtn{flex:1;border:none;background:none;font-family:'Inter';font-weight:800;font-size:.9rem;color:var(--muted);padding:9px 6px;border-radius:9px;cursor:pointer}
+  .segbtn.on{background:var(--sea);color:#fff}
+  .emptyplans{color:var(--muted);text-align:center;padding:26px 10px;font-size:.92rem}
+
+  /* banner objetivo cumplido */
+  .cumplido{background:linear-gradient(90deg,var(--ember),var(--sun));color:#fff;font-family:'Bricolage Grotesque';font-weight:800;letter-spacing:.5px;text-align:center;font-size:1.15rem;padding:12px 10px;border-radius:14px;margin-bottom:12px;box-shadow:0 4px 14px rgba(228,87,46,.28)}
+
+  /* fuegos */
+  .fx{position:fixed;inset:0;z-index:9998;pointer-events:none}
+
+  /* visor de fotos */
+  .lightbox{position:fixed;inset:0;z-index:9999;background:rgba(6,20,23,.94);display:none;align-items:center;justify-content:center}
+  .lightbox.show{display:flex}
+  .lightbox img{max-width:92vw;max-height:80vh;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,.5);touch-action:pan-y}
+  .lbclose{position:absolute;top:14px;right:16px;width:42px;height:42px;border:none;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;font-size:1.1rem;cursor:pointer}
+  .lbnav{position:absolute;top:50%;transform:translateY(-50%);width:48px;height:64px;border:none;border-radius:12px;background:rgba(255,255,255,.12);color:#fff;font-size:2rem;line-height:1;cursor:pointer}
+  .lbnav.prev{left:10px}.lbnav.next{right:10px}
+  .lbcap{position:absolute;bottom:22px;left:0;right:0;text-align:center;color:#fff;font-size:.9rem;padding:0 16px}
+  .lbcount{opacity:.7;margin-left:8px;font-size:.8rem}
 
   /* forms */
   .addcard{background:var(--card);border:1.5px dashed var(--line);border-radius:18px;padding:16px 18px;margin-bottom:14px}
@@ -273,8 +296,12 @@
   <section id="planes" class="active">
     <h2 class="sec-title">Los planes</h2>
     <p class="sec-sub">Apúntate a los que quieras. Cualquiera puede proponer uno nuevo.</p>
+    <div class="segtabs">
+      <button id="segPend" class="segbtn on" onclick="setPlanFilter('pend')">Pendientes</button>
+      <button id="segDone" class="segbtn" onclick="setPlanFilter('done')">Completados</button>
+    </div>
     <div id="planList"></div>
-    <details class="addcard">
+    <details class="addcard" id="addPlan">
       <summary>Proponer un plan</summary>
       <div class="form">
         <div class="two">
@@ -354,11 +381,20 @@
 
 <div class="toast" id="toast"></div>
 
+<div id="lightbox" class="lightbox" onclick="if(event.target.id==='lightbox')closeLightbox()">
+  <button class="lbclose" onclick="closeLightbox()" aria-label="Cerrar">✕</button>
+  <button class="lbnav prev" onclick="lbNav(-1)" aria-label="Anterior">‹</button>
+  <img id="lbImg" alt="recuerdo">
+  <button class="lbnav next" onclick="lbNav(1)" aria-label="Siguiente">›</button>
+  <div class="lbcap"><span id="lbCap"></span> <span id="lbCount" class="lbcount"></span></div>
+</div>
+
 <script>
 const MONTHS=[[2026,5],[2026,6],[2026,7],[2026,8]];
 const MN=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 const DOW=['L','M','X','J','V','S','D'];
 let DATA={plans:[],availability:{},polls:[]};
+let planFilter='pend';        // 'pend' | 'done'
 let mine=new Set();           // mis días seleccionados (sin guardar)
 const nameEl=document.getElementById('name');
 nameEl.value=localStorage.getItem('pv_name')||'';
@@ -396,23 +432,46 @@ function memFormBusy(){
 function renderPlans(auto){
   if(auto && memFormBusy()) return;            // no pisar una subida a medias
   const me=myName();
-  document.getElementById('planList').innerHTML=DATA.plans.map(p=>{
+  const done=planFilter==='done';
+  document.getElementById('segPend')?.classList.toggle('on',!done);
+  document.getElementById('segDone')?.classList.toggle('on',done);
+  const addEl=document.getElementById('addPlan'); if(addEl) addEl.style.display=done?'none':'';
+  const list=DATA.plans.filter(p=>!!p.done===done);
+  if(!list.length){
+    document.getElementById('planList').innerHTML=`<p class="emptyplans">${done?'Aún no habéis completado ningún plan. ¡A por el primero! 💪':'No hay planes pendientes ahora mismo.'}</p>`;
+    return;
+  }
+  document.getElementById('planList').innerHTML=list.map(p=>{
     const joined=p.signups.includes(me)&&me;
+    if(p.done){
+      return `<article class="plan isdone" data-c="${p.color||'teal'}">
+        <div class="cumplido">🎆 OBJETIVO CUMPLIDO 🎆</div>
+        <div class="head"><span class="emoji">${esc(p.emoji||'📍')}</span><h3>${esc(p.title)}</h3></div>
+        ${p.description?`<p class="desc">${esc(p.description)}</p>`:''}
+        <div class="meta">
+          ${p.location?`<span class="chip where">📍 ${esc(p.location)}</span>`:''}
+          ${p.price?`<span class="chip price">${esc(p.price)}</span>`:''}
+        </div>
+        ${doneSections(p)}
+        <div class="foot">
+          <span class="count">${p.created_by?'propuesto por '+esc(p.created_by):''}</span>
+          <span><button class="del" onclick="toggleDone(${p.id})">reabrir</button></span>
+        </div>
+      </article>`;
+    }
     const ppl=p.signups.length?`<div class="ppl">${p.signups.map(n=>`<span class="nm">${esc(n)}</span>`).join('')}</div>`:'';
-    const done=!!p.done;
-    return `<article class="plan${done?' isdone':''}" data-c="${p.color||'teal'}">
-      <div class="head"><span class="emoji">${esc(p.emoji||'📍')}</span><h3>${esc(p.title)}</h3>${done?'<span class="donebadge">✅ Hecho</span>':''}</div>
+    return `<article class="plan" data-c="${p.color||'teal'}">
+      <div class="head"><span class="emoji">${esc(p.emoji||'📍')}</span><h3>${esc(p.title)}</h3></div>
       ${p.description?`<p class="desc">${esc(p.description)}</p>`:''}
       <div class="meta">
         ${p.location?`<span class="chip where">📍 ${esc(p.location)}</span>`:''}
         ${p.price?`<span class="chip price">${esc(p.price)}</span>`:''}
       </div>
       ${ppl}
-      ${done?doneSections(p):''}
       <div class="foot">
         <span class="count">${p.signups.length} apuntad${p.signups.length===1?'o/a':'os/as'}${p.created_by?' · propuesto por '+esc(p.created_by):''}</span>
         <span>
-          <button class="del" onclick="toggleDone(${p.id})">${done?'reabrir':'marcar hecho'}</button>
+          <button class="del" onclick="toggleDone(${p.id})">marcar hecho</button>
           ${!p.fixed?`<button class="del" onclick="delPlan(${p.id})">borrar</button> `:''}
           <button class="btn ${joined?'out':''}" onclick="togglePlan(${p.id})">${joined?'✓ Apuntado':'Apuntarme'}</button>
         </span>
@@ -420,6 +479,7 @@ function renderPlans(auto){
     </article>`;
   }).join('');
 }
+function setPlanFilter(f){ planFilter=f; renderPlans(); }
 function doneSections(p){
   const att=p.attendance||[], mem=p.memories||[];
   const chips=members().map(n=>{
@@ -427,7 +487,7 @@ function doneSections(p){
     return `<button class="attchip${on?' on':''}" onclick="toggleAtt(${p.id},'${jsstr(n)}')">${on?'✓ ':''}${esc(n)}</button>`;
   }).join('');
   const gallery=mem.length
-    ? `<div class="memgrid">${mem.map(memCard).join('')}</div>`
+    ? `<div class="memgrid">${mem.map(m=>memCard(p.id,m)).join('')}</div>`
     : `<p class="memempty">Aún no hay recuerdos. ¡Sube el primero! 📸</p>`;
   return `<div class="donebox">
     <div class="dsec">
@@ -445,16 +505,20 @@ function doneSections(p){
     </div>
   </div>`;
 }
-function memCard(m){
+function memCard(pid,m){
   const meta=(m.caption?`<span class="cap">${esc(m.caption)}</span>`:'')+(m.author?`<span class="au">— ${esc(m.author)}</span>`:'');
   const media=m.hasPhoto
-    ? `<img loading="lazy" src="/api/memories/${m.id}/photo" alt="recuerdo">`
+    ? `<img loading="lazy" src="/api/memories/${m.id}/photo" alt="recuerdo" onclick="openLightbox(${pid},${m.id})">`
     : `<div class="note">📝</div>`;
   return `<figure class="memitem">${media}<figcaption>${meta||'&nbsp;'}</figcaption><button class="memdel" title="Borrar" onclick="delMemory(${m.id})">✕</button></figure>`;
 }
 function jsstr(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
 async function toggleDone(id){
-  try{await api(`/api/plans/${id}/done`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({})});await load();}
+  try{
+    const r=await api(`/api/plans/${id}/done`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({})});
+    await load();
+    if(r.done){ setPlanFilter('done'); celebrate(); }
+  }
   catch(e){toast(e.message);}
 }
 async function toggleAtt(id,name){
@@ -510,6 +574,56 @@ async function addPlan(){
   }catch(e){toast(e.message);}
 }
 async function delPlan(id){if(!confirm('¿Borrar esta propuesta?'))return;try{await api(`/api/plans/${id}`,{method:'DELETE'});await load();}catch(e){toast(e.message);}}
+
+/* ---------- FUEGOS ARTIFICIALES ---------- */
+function celebrate(){
+  const cv=document.createElement('canvas'); cv.className='fx'; document.body.appendChild(cv);
+  const ctx=cv.getContext('2d'); let W,H;
+  const size=()=>{W=cv.width=innerWidth;H=cv.height=innerHeight;}; size();
+  const cols=['#E4572E','#1F9E96','#D8922B','#7D5BA6','#2E8FB0','#5AA06B','#ffd447'];
+  const parts=[];
+  const burst=(x,y)=>{const n=42+Math.random()*24, base=cols[Math.floor(Math.random()*cols.length)];
+    for(let i=0;i<n;i++){const a=(Math.PI*2*i)/n, s=2+Math.random()*4.5;
+      parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,col:Math.random()<.25?cols[Math.floor(Math.random()*cols.length)]:base});}};
+  const t0=performance.now(); let last=0;
+  const frame=t=>{
+    ctx.clearRect(0,0,W,H);
+    if(t-last>300 && t-t0<2300){last=t; burst(W*(0.15+Math.random()*0.7), H*(0.15+Math.random()*0.45));}
+    for(let i=parts.length-1;i>=0;i--){const p=parts[i]; p.vy+=0.05; p.x+=p.vx; p.y+=p.vy; p.vx*=0.99; p.life-=0.012; if(p.life<=0)parts.splice(i,1);}
+    parts.forEach(p=>{ctx.globalAlpha=Math.max(0,p.life);ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(p.x,p.y,2.6,0,7);ctx.fill();});
+    ctx.globalAlpha=1;
+    if(t-t0<3000||parts.length)requestAnimationFrame(frame); else cv.remove();
+  };
+  burst(W*0.5,H*0.38); requestAnimationFrame(frame);
+}
+
+/* ---------- VISOR DE FOTOS (carrusel) ---------- */
+let lbList=[], lbIdx=0;
+function openLightbox(pid,mid){
+  const p=DATA.plans.find(x=>x.id===pid); if(!p)return;
+  lbList=(p.memories||[]).filter(m=>m.hasPhoto);
+  lbIdx=Math.max(0,lbList.findIndex(m=>m.id===mid));
+  showLb(); document.getElementById('lightbox').classList.add('show');
+}
+function showLb(){
+  if(!lbList.length)return closeLightbox();
+  const m=lbList[lbIdx];
+  document.getElementById('lbImg').src=`/api/memories/${m.id}/photo`;
+  document.getElementById('lbCap').textContent=(m.caption||'')+(m.author?'  — '+m.author:'');
+  document.getElementById('lbCount').textContent=lbList.length>1?(lbIdx+1)+' / '+lbList.length:'';
+  const multi=lbList.length>1;
+  document.querySelectorAll('.lbnav').forEach(b=>b.style.display=multi?'':'none');
+}
+function lbNav(d){ if(!lbList.length)return; lbIdx=(lbIdx+d+lbList.length)%lbList.length; showLb(); }
+function closeLightbox(){ document.getElementById('lightbox').classList.remove('show'); document.getElementById('lbImg').src=''; }
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('lightbox').classList.contains('show'))return;
+  if(e.key==='Escape')closeLightbox(); else if(e.key==='ArrowRight')lbNav(1); else if(e.key==='ArrowLeft')lbNav(-1);
+});
+(()=>{let x0=null;const lb=document.getElementById('lbImg');
+  lb.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;},{passive:true});
+  lb.addEventListener('touchend',e=>{if(x0==null)return;const dx=e.changedTouches[0].clientX-x0;if(Math.abs(dx)>40)lbNav(dx<0?1:-1);x0=null;},{passive:true});
+})();
 
 /* ---------- DISPONIBILIDAD ---------- */
 function iso(y,m,d){return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;}
