@@ -131,6 +131,8 @@
   .segbtn{flex:1;border:none;background:none;font-family:'Inter';font-weight:800;font-size:.9rem;color:var(--muted);padding:9px 6px;border-radius:9px;cursor:pointer}
   .segbtn.on{background:var(--sea);color:#fff}
   .emptyplans{color:var(--muted);text-align:center;padding:26px 10px;font-size:.92rem}
+  .donebtn{width:100%;margin-top:12px;background:#4f8a5f;color:#fff;font-size:.92rem;padding:11px}
+  .donebtn:hover{filter:brightness(1.05)}
 
   /* banner objetivo cumplido */
   .cumplido{background:linear-gradient(90deg,var(--ember),var(--sun));color:#fff;font-family:'Bricolage Grotesque';font-weight:800;letter-spacing:.5px;text-align:center;font-size:1.15rem;padding:12px 10px;border-radius:14px;margin-bottom:12px;box-shadow:0 4px 14px rgba(228,87,46,.28)}
@@ -468,10 +470,10 @@ function renderPlans(auto){
         ${p.price?`<span class="chip price">${esc(p.price)}</span>`:''}
       </div>
       ${ppl}
+      <button class="btn donebtn" onclick="toggleDone(${p.id})">🎯 Marcar como hecho</button>
       <div class="foot">
         <span class="count">${p.signups.length} apuntad${p.signups.length===1?'o/a':'os/as'}${p.created_by?' · propuesto por '+esc(p.created_by):''}</span>
         <span>
-          <button class="del" onclick="toggleDone(${p.id})">marcar hecho</button>
           ${!p.fixed?`<button class="del" onclick="delPlan(${p.id})">borrar</button> `:''}
           <button class="btn ${joined?'out':''}" onclick="togglePlan(${p.id})">${joined?'✓ Apuntado':'Apuntarme'}</button>
         </span>
