@@ -68,6 +68,9 @@
   .sec-sub{color:var(--muted);font-size:.88rem;margin:0 0 16px}
   .agua{margin:-6px 0 14px}
   .agua-pill{display:inline-block;font-weight:800;font-size:.92rem;padding:7px 13px;border-radius:999px}
+  .webcams{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+  .camlink{display:block;background:#E1F0F5;color:#1c6b86;font-weight:700;font-size:.86rem;text-decoration:none;padding:11px 14px;border-radius:12px;border:1px solid #c7e3ec}
+  .camlink:hover{filter:brightness(.97)}
 
   /* plan cards */
   .plan{
@@ -383,6 +386,11 @@
     <h2 class="sec-title">Suances · mar y tiempo</h2>
     <p class="sec-sub">El tiempo y las mareas de los próximos días, para cuadrar playa y snorkel.</p>
     <div id="agua" class="agua"></div>
+    <h3 class="block-h">Cámaras en directo</h3>
+    <div class="webcams">
+      <a class="camlink" href="https://www.skylinewebcams.com/es/webcam/espana/cantabria/suances/playa-de-los-locos.html" target="_blank" rel="noopener">📹 Playa de los Locos · en directo →</a>
+      <a class="camlink" href="https://www.skylinewebcams.com/es/webcam/espana/cantabria/suances/playa-de-la-concha.html" target="_blank" rel="noopener">📹 Playa de la Concha · en directo →</a>
+    </div>
     <div class="banner" id="costaLoad">Cargando el tiempo y las mareas…</div>
     <h3 class="block-h">El tiempo</h3>
     <div id="wx"></div>
