@@ -393,8 +393,18 @@
     <div id="agua" class="agua"></div>
     <h3 class="block-h">Cámaras en directo</h3>
     <div class="webcams">
-      <a class="camlink" href="https://www.skylinewebcams.com/es/webcam/espana/cantabria/suances/playa-de-los-locos.html" target="_blank" rel="noopener">📹 Playa de los Locos · ver en directo →</a>
-      <a class="camlink" href="https://www.skylinewebcams.com/es/webcam/espana/cantabria/suances/playa-de-la-concha.html" target="_blank" rel="noopener">📹 Playa de la Concha · ver en directo →</a>
+      <figure class="camfig">
+        <a href="https://www.skylinewebcams.com/es/webcam/espana/cantabria/suances/playa-de-los-locos.html" target="_blank" rel="noopener">
+          <img class="camimg" data-base="https://embed.skylinewebcams.com/img/757.jpg" src="https://embed.skylinewebcams.com/img/757.jpg" alt="Playa de los Locos" loading="lazy">
+        </a>
+        <figcaption class="camcap">Playa de los Locos · captura, se actualiza al entrar · toca para el directo</figcaption>
+      </figure>
+      <figure class="camfig">
+        <a href="https://www.skylinewebcams.com/es/webcam/espana/cantabria/suances/playa-de-la-concha.html" target="_blank" rel="noopener">
+          <img class="camimg" data-base="https://embed.skylinewebcams.com/img/804.jpg" src="https://embed.skylinewebcams.com/img/804.jpg" alt="Playa de la Concha" loading="lazy">
+        </a>
+        <figcaption class="camcap">Playa de la Concha · captura, se actualiza al entrar · toca para el directo</figcaption>
+      </figure>
     </div>
     <div class="banner" id="costaLoad">Cargando el tiempo y las mareas…</div>
     <h3 class="block-h">El tiempo</h3>
@@ -448,10 +458,12 @@ async function api(url,opts){const r=await fetch(url,opts);const j=await r.json(
 document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.toggle('active',x===b));
   document.querySelectorAll('section').forEach(s=>s.classList.toggle('active',s.id===b.dataset.tab));
-  if(b.dataset.tab==='costa') loadCosta();
+  if(b.dataset.tab==='costa'){ loadCosta(); refreshCams(); }
   window.scrollTo({top:0,behavior:'smooth'});
 });
-function refreshCams(){}
+function refreshCams(){
+  document.querySelectorAll('.camimg').forEach(img=>{ if(img.dataset.base) img.src=img.dataset.base+'?t='+Date.now(); });
+}
 
 async function load(){
   try{DATA=await api('/api/data');}
