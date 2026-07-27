@@ -70,7 +70,8 @@
   .agua-pill{display:inline-block;font-weight:800;font-size:.92rem;padding:7px 13px;border-radius:999px}
   .webcams{display:flex;flex-direction:column;gap:14px;margin-bottom:16px}
   .camfig{margin:0}
-  .camfig a{display:block;border-radius:14px;overflow:hidden;border:1px solid var(--line);line-height:0}
+  .camfig a{display:block;position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--line);line-height:0}
+  .camlive{position:absolute;top:8px;left:8px;background:rgba(228,87,46,.92);color:#fff;font-size:.66rem;font-weight:800;letter-spacing:.4px;padding:3px 8px;border-radius:999px;line-height:1}
   .camimg{width:100%;display:block;aspect-ratio:16/9;object-fit:cover;background:#dfe7e6}
   .camcap{font-size:.78rem;color:var(--muted);font-weight:600;margin-top:5px}
   .camlink{display:block;background:#E1F0F5;color:#1c6b86;font-weight:700;font-size:.86rem;text-decoration:none;padding:11px 14px;border-radius:12px;border:1px solid #c7e3ec}
@@ -395,14 +396,16 @@
       <figure class="camfig">
         <a href="https://www.skylinewebcams.com/es/webcam/espana/cantabria/suances/playa-de-los-locos.html" target="_blank" rel="noopener">
           <img class="camimg" data-base="https://embed.skylinewebcams.com/img/757.jpg" src="https://embed.skylinewebcams.com/img/757.jpg" alt="Playa de los Locos en directo" loading="lazy">
+          <span class="camlive">● EN VIVO</span>
         </a>
-        <figcaption class="camcap">📹 Playa de los Locos · toca para el directo</figcaption>
+        <figcaption class="camcap">Playa de los Locos · se actualiza sola · toca para pantalla completa</figcaption>
       </figure>
       <figure class="camfig">
         <a href="https://www.skylinewebcams.com/es/webcam/espana/cantabria/suances/playa-de-la-concha.html" target="_blank" rel="noopener">
           <img class="camimg" data-base="https://embed.skylinewebcams.com/img/804.jpg" src="https://embed.skylinewebcams.com/img/804.jpg" alt="Playa de la Concha en directo" loading="lazy">
+          <span class="camlive">● EN VIVO</span>
         </a>
-        <figcaption class="camcap">📹 Playa de la Concha · toca para el directo</figcaption>
+        <figcaption class="camcap">Playa de la Concha · se actualiza sola · toca para pantalla completa</figcaption>
       </figure>
     </div>
     <div class="banner" id="costaLoad">Cargando el tiempo y las mareas…</div>
@@ -465,7 +468,7 @@ function refreshCams(){
   if(!costa||!costa.classList.contains('active'))return;
   document.querySelectorAll('.camimg').forEach(img=>{ if(img.dataset.base) img.src=img.dataset.base+'?t='+Date.now(); });
 }
-setInterval(refreshCams,60000); // instantánea de las cámaras al día (cada minuto)
+setInterval(refreshCams,10000); // instantánea casi en directo (cada 10 s)
 
 async function load(){
   try{DATA=await api('/api/data');}
