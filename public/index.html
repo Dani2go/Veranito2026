@@ -393,20 +393,8 @@
     <div id="agua" class="agua"></div>
     <h3 class="block-h">Cámaras en directo</h3>
     <div class="webcams">
-      <figure class="camfig">
-        <a href="https://www.skylinewebcams.com/es/webcam/espana/cantabria/suances/playa-de-los-locos.html" target="_blank" rel="noopener">
-          <img class="camimg" data-base="https://embed.skylinewebcams.com/img/757.jpg" src="https://embed.skylinewebcams.com/img/757.jpg" alt="Playa de los Locos en directo" loading="lazy">
-          <span class="camlive">● EN VIVO</span>
-        </a>
-        <figcaption class="camcap">Playa de los Locos · se actualiza sola · toca para pantalla completa</figcaption>
-      </figure>
-      <figure class="camfig">
-        <a href="https://www.skylinewebcams.com/es/webcam/espana/cantabria/suances/playa-de-la-concha.html" target="_blank" rel="noopener">
-          <img class="camimg" data-base="https://embed.skylinewebcams.com/img/804.jpg" src="https://embed.skylinewebcams.com/img/804.jpg" alt="Playa de la Concha en directo" loading="lazy">
-          <span class="camlive">● EN VIVO</span>
-        </a>
-        <figcaption class="camcap">Playa de la Concha · se actualiza sola · toca para pantalla completa</figcaption>
-      </figure>
+      <a class="camlink" href="https://www.skylinewebcams.com/es/webcam/espana/cantabria/suances/playa-de-los-locos.html" target="_blank" rel="noopener">📹 Playa de los Locos · ver en directo →</a>
+      <a class="camlink" href="https://www.skylinewebcams.com/es/webcam/espana/cantabria/suances/playa-de-la-concha.html" target="_blank" rel="noopener">📹 Playa de la Concha · ver en directo →</a>
     </div>
     <div class="banner" id="costaLoad">Cargando el tiempo y las mareas…</div>
     <h3 class="block-h">El tiempo</h3>
@@ -460,15 +448,10 @@ async function api(url,opts){const r=await fetch(url,opts);const j=await r.json(
 document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.toggle('active',x===b));
   document.querySelectorAll('section').forEach(s=>s.classList.toggle('active',s.id===b.dataset.tab));
-  if(b.dataset.tab==='costa'){ loadCosta(); refreshCams(); }
+  if(b.dataset.tab==='costa') loadCosta();
   window.scrollTo({top:0,behavior:'smooth'});
 });
-function refreshCams(){
-  const costa=document.getElementById('costa');
-  if(!costa||!costa.classList.contains('active'))return;
-  document.querySelectorAll('.camimg').forEach(img=>{ if(img.dataset.base) img.src=img.dataset.base+'?t='+Date.now(); });
-}
-setInterval(refreshCams,10000); // instantánea casi en directo (cada 10 s)
+function refreshCams(){}
 
 async function load(){
   try{DATA=await api('/api/data');}
