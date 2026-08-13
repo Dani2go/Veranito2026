@@ -112,7 +112,28 @@ async function init() {
       concept TEXT DEFAULT '',
       created_at TIMESTAMPTZ DEFAULT now()
     );
+    CREATE TABLE IF NOT EXISTS hitos (
+      id SERIAL PRIMARY KEY,
+      text TEXT NOT NULL,
+      done BOOLEAN DEFAULT false,
+      done_by TEXT DEFAULT '',
+      created_at TIMESTAMPTZ DEFAULT now()
+    );
   `);
+
+  // Hitos de la Patrona: se siembran solo si la tabla está vacía (no repisa lo que añadáis/borréis).
+  const hcount = (await pool.query("SELECT COUNT(*)::int AS n FROM hitos")).rows[0].n;
+  if (hcount === 0) {
+    const SEED_HITOS = [
+      "Tomar chatos 🍷",
+      "Montar en los coches de choque 🎡",
+      "Ver a Juanillo (DJ Laika) en el Rincón Cubano 🎧",
+      "Bailar con Chico Blanco 🕺",
+      "Foto de grupo en las fiestas 📸",
+      "Aguantar hasta el amanecer 🌅",
+    ];
+    for (const t of SEED_HITOS) await pool.query("INSERT INTO hitos (text) VALUES ($1)", [t]);
+  }
 
   // Sincroniza los planes fijos desde el código en cada arranque.
   // ON CONFLICT (slug) DO UPDATE mantiene el mismo id, así que los apuntados no se pierden.
@@ -201,6 +222,7 @@ app.get("/api/data", async (_req, res) => {
     const polls = (await pool.query("SELECT * FROM polls ORDER BY created_at DESC")).rows;
     const options = (await pool.query("SELECT * FROM poll_options ORDER BY id")).rows;
     const votes = (await pool.query("SELECT option_id, name FROM poll_votes")).rows;
+    const hitos = (await pool.query("SELECT id, text, done, done_by FROM hitos ORDER BY done ASC, id ASC")).rows;
 
     const planList = plans.map((p) => ({
       ...p,
@@ -222,7 +244,7 @@ app.get("/api/data", async (_req, res) => {
         .map((o) => ({ id: o.id, label: o.label, votes: votes.filter((v) => v.option_id === o.id).map((v) => v.name) })),
     }));
 
-    res.json({ plans: planList, availability, polls: pollList });
+    res.json({ plans: planList, availability, polls: pollList, hitos });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: "No se pudo leer la base de datos" });
@@ -388,6 +410,38 @@ app.post("/api/plans/:id/expenses", async (req, res) => {
 app.delete("/api/expenses/:id", async (req, res) => {
   try {
     await pool.query("DELETE FROM expenses WHERE id=$1", [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: "No se pudo borrar" });
+  }
+});
+
+// Hitos de la Patrona
+app.post("/api/hitos", async (req, res) => {
+  try {
+    const text = clean(req.body.text, 80);
+    if (!text) return res.status(400).json({ error: "Escribe el hito" });
+    const { rows } = await pool.query("INSERT INTO hitos (text) VALUES ($1) RETURNING id", [text]);
+    res.json({ ok: true, id: rows[0].id });
+  } catch (e) {
+    res.status(500).json({ error: "No se pudo añadir" });
+  }
+});
+app.post("/api/hitos/:id/done", async (req, res) => {
+  try {
+    const by = clean(req.body.name, 40);
+    const cur = await pool.query("SELECT done FROM hitos WHERE id=$1", [req.params.id]);
+    if (!cur.rowCount) return res.status(404).json({ error: "No existe" });
+    const nd = !cur.rows[0].done;
+    await pool.query("UPDATE hitos SET done=$1, done_by=CASE WHEN $1 THEN $2 ELSE '' END WHERE id=$3", [nd, by, req.params.id]);
+    res.json({ ok: true, done: nd });
+  } catch (e) {
+    res.status(500).json({ error: "No se pudo actualizar" });
+  }
+});
+app.delete("/api/hitos/:id", async (req, res) => {
+  try {
+    await pool.query("DELETE FROM hitos WHERE id=$1", [req.params.id]);
     res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ error: "No se pudo borrar" });
