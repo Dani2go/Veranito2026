@@ -328,7 +328,6 @@
 <header>
   <div class="wrap" style="padding:0">
     <img class="hbanner" src="/patrona/portada.jpg" alt="La Patrona 2026 · Fiestas de la Virgen Grande · 13/23 Agosto · Torrelavega">
-    <div class="hkick">PATATUQUENS · plan de verano '26</div>
     <div class="who">
       <select id="name" autocomplete="off">
         <option value="" disabled selected>Elige tu nombre</option>
@@ -358,7 +357,6 @@
     <button data-tab="patrona" class="patronatab active">Patrona</button>
     <button data-tab="planes">Planes</button>
     <button data-tab="dispo">Días</button>
-    <button data-tab="votos">Votaciones</button>
     <button data-tab="costa">Costa</button>
   </nav>
 
@@ -404,25 +402,6 @@
     </div>
   </section>
 
-  <!-- VOTACIONES -->
-  <section id="votos">
-    <h2 class="sec-title">Votaciones</h2>
-    <p class="sec-sub">Para decidir cualquier cosa: sitio, fecha, qué traer… Puedes marcar varias opciones.</p>
-    <div id="pollList"></div>
-    <details class="addcard">
-      <summary>Crear una votación</summary>
-      <div class="form">
-        <input id="qText" placeholder="Pregunta (p. ej. ¿Qué finde para Casa Poli?)" maxlength="160">
-        <div id="optWrap">
-          <input class="optIn" placeholder="Opción 1" maxlength="80">
-          <input class="optIn" placeholder="Opción 2" maxlength="80" style="margin-top:8px">
-        </div>
-        <button class="btn ghost" onclick="addOptField()">+ Otra opción</button>
-        <button class="btn" style="background:var(--teal)" onclick="addPoll()">Crear votación</button>
-      </div>
-    </details>
-  </section>
-
   <!-- COSTA -->
   <section id="costa">
     <h2 class="sec-title">Suances · mar y tiempo</h2>
@@ -454,11 +433,6 @@
   <section id="patrona" class="active">
     <img class="cartel" src="/patrona/oficial.jpg" alt="Cartel oficial La Patrona 2026 · Fiestas de la Virgen Grande">
     <a class="progoficial" href="https://eventosdecantabria.es/event/fiestas-de-la-virgen-grande-en-torrelavega-2026-programa-completo/" target="_blank" rel="noopener">📋 Programa oficial completo →</a>
-
-    <div class="psat">
-      <h3>Nuestro sábado · 15 agosto</h3>
-      <p>El día que salimos todos. Imprescindibles: <b>Chico Blanco</b> a las 22:00 (Esc. Llama) y <b>Juanillo · DJ Laika</b> a las 00:30 en el Rincón Cubano (Cumpleaños Fidel).</p>
-    </div>
 
     <h3 class="block-h">Hitos de la Patrona</h3>
     <div id="hitos"></div>
@@ -885,6 +859,7 @@ async function saveDispo(){
 /* ---------- VOTACIONES ---------- */
 function renderPolls(){
   const me=myName();const el=document.getElementById('pollList');
+  if(!el)return;
   if(!DATA.polls.length){el.innerHTML='<p class="empty">Todavía no hay votaciones. Crea la primera abajo.</p>';return;}
   el.innerHTML=DATA.polls.map(p=>{
     const max=Math.max(1,...p.options.map(o=>o.votes.length));
