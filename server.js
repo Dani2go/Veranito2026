@@ -28,15 +28,13 @@ const TIDE_LAT = 43.4356, TIDE_LON = -4.0473; // Suances
 
 const SEED = [
   ["dougalls", "Comida en DouGall's", "🍺", "Comida en la fábrica de cerveza artesana de Liérganes. Tablas, birras de barril y terraza.", "Liérganes", "~30 €/persona (51 € con visita+maridaje)", "teal", "Sara"],
-  ["casapoli", "Casa Poli", "🦞", "Casa de comidas de culto cerca de Llanes. Sin reservas (llegar 13:00), pescado del día y sidra.", "Puertas de Vidiago (Asturias)", "~35 €/persona", "leaf", "Daniel"],
-  ["barbacoa", "Barbacoa en La Moruca", "🔥", "Barbacoa en mi casa, en Tagle. Carne, hielo y tarde larga.", "Tagle", "bote común ~12 €", "ember", "Marta"],
   ["bbk", "Finde del BBK", "🎧", "Pinchada de Petro y Tony que monta Camilo, coincidiendo con el Bilbao BBK Live.", "Bilbao", "9–11 jul · fecha fija", "plum", "Camilo"],
   ["ramales", "Cuevas de Ramales", "🦌", "Visita a las cuevas de Ramales de la Victoria (Covalanas / Cullalvera): arte rupestre y geología. Reservar la visita guiada.", "Ramales de la Victoria", "entrada ~15 €", "sun", "Alex"],
   ["snorkel", "Snorkel en Punta Ballota", "🤿", "Snorkel y playa en Punta Ballota, en Suances. Trae gafas y tubo.", "Suances", "gratis", "sky", "Daniel"],
-  ["getaria", "Getaria y noche en Donosti", "🐟", "Homenaje de pescado a la brasa en Getaria y, si apetece, noche de mamoneo por Donosti. Lo de la noche es opcional, pero redondea el plan.", "Getaria (Gipuzkoa)", "comida ~60 € · noche en Donosti aparte", "navy", "Camilo"],
   ["bonito", "Barbacoa de bonito", "🐟", "Viernes 10: barbacoa de bonito coincidiendo con el España–Bélgica de cuartos del Mundial. Pescado a la brasa y partidazo.", "Tagle", "bote común 15 €", "sky", "Daniel"],
-  ["asado", "Asado en la lleldería", "🥩", "Asado patagónico al fuego con Sandialito: carnes a la leña cocinadas lento, con producto de animales criados en libertad y técnicas tradicionales de gauchos y pastores. Horario 13:30 h · Duración 4,5 h.", "Merilla", "55 € (bebida incluida)", "ember", "Camilo"],
 ];
+// Planes retirados: se borran de la BD si existían (eran fijos y no se pueden borrar desde la app).
+const REMOVE_SLUGS = ["casapoli", "barbacoa", "getaria", "asado"];
 
 async function init() {
   await pool.query(`
@@ -148,6 +146,9 @@ async function init() {
     );
   }
   console.log("Planes fijos sincronizados.");
+  if (REMOVE_SLUGS.length) {
+    await pool.query("DELETE FROM plans WHERE slug = ANY($1)", [REMOVE_SLUGS]);
+  }
 }
 
 const clean = (s, max) => String(s == null ? "" : s).trim().slice(0, max);
