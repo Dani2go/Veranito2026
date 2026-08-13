@@ -53,13 +53,15 @@
   .who span{font-size:.78rem;color:#BFE9E4;white-space:nowrap}
 
   /* tabs */
-  nav.tabs{display:flex;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:14px;
+  nav.tabs{display:flex;gap:5px;background:var(--card);border:1px solid var(--line);border-radius:14px;
     padding:5px;margin:16px auto;position:sticky;top:8px;z-index:20;box-shadow:0 6px 20px -14px rgba(0,0,0,.3)}
   nav.tabs button{
-    flex:1;border:none;background:transparent;font-family:'Inter';font-weight:700;font-size:.82rem;
-    color:var(--muted);padding:10px 3px;border-radius:10px;cursor:pointer
+    flex:1;border:none;background:transparent;font-family:'Inter';font-weight:700;font-size:.78rem;
+    color:var(--muted);padding:10px 2px;border-radius:10px;cursor:pointer;white-space:nowrap
   }
   nav.tabs button.active{background:var(--sea);color:#fff}
+  nav.tabs button.patronatab{color:#C8102E}
+  nav.tabs button.patronatab.active{background:linear-gradient(90deg,#E4002B,#F4C400);color:#fff}
 
   section{display:none}
   section.active{display:block;animation:fade .25s ease}
@@ -74,6 +76,36 @@
   .camlive{position:absolute;top:8px;left:8px;background:rgba(228,87,46,.92);color:#fff;font-size:.66rem;font-weight:800;letter-spacing:.4px;padding:3px 8px;border-radius:999px;line-height:1}
   .camimg{width:100%;display:block;aspect-ratio:16/9;object-fit:cover;background:#dfe7e6}
   .camcap{font-size:.78rem;color:var(--muted);font-weight:600;margin-top:5px}
+
+  /* --- Patrona --- */
+  .phero{background:#F4C400;border-radius:18px;padding:22px 18px;text-align:center;margin-bottom:16px}
+  .pkicker{font-weight:800;font-size:.7rem;letter-spacing:1px;text-transform:uppercase;color:#1E8A3C}
+  .ptitle{font-family:'Bricolage Grotesque';font-weight:800;font-size:2.5rem;line-height:.95;color:#E4002B;margin:5px 0 6px}
+  .pdates{font-weight:800;color:#0B3E45;font-size:.9rem}
+  .psat{background:#fff;border:2px solid #F4C400;border-left:6px solid #E4002B;border-radius:14px;padding:12px 14px;margin-bottom:18px}
+  .psat h3{margin:0 0 4px;font-family:'Bricolage Grotesque';color:#E4002B}
+  .psat p{margin:0;font-size:.9rem;color:var(--sea);line-height:1.5}
+  .psub{font-size:.82rem;color:var(--muted);margin:-6px 0 10px}
+  #hitos{display:flex;flex-direction:column;gap:7px;margin-bottom:10px}
+  .hito{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 12px}
+  .hito .hk{width:26px;height:26px;border-radius:50%;border:2px solid #cdd6d3;flex:0 0 auto;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.9rem;color:#fff;background:#fff}
+  .hito.done .hk{background:#1E8A3C;border-color:#1E8A3C}
+  .hito .ht{flex:1;font-weight:600;color:var(--sea);font-size:.92rem}
+  .hito.done .ht{text-decoration:line-through;color:var(--muted)}
+  .hito .hby{font-size:.68rem;color:#1E8A3C;font-weight:800;white-space:nowrap}
+  .hito .hx{border:none;background:none;color:#C2BBA6;cursor:pointer;font-size:.8rem}
+  .hito .hx:hover{color:var(--ember)}
+  .hitoadd{display:flex;gap:8px;margin-bottom:8px}
+  .hitoadd .minput{flex:1}
+  .prog{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+  .prow{display:flex;gap:10px;align-items:baseline;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 11px}
+  .prow.hot{border-color:#E4002B;background:#FFF5F2}
+  .ptime{font-weight:800;color:#E4002B;font-size:.82rem;flex:0 0 auto;min-width:46px}
+  .pact{flex:1;font-weight:700;color:var(--sea);font-size:.9rem}
+  .pact .pstage{display:block;font-size:.7rem;color:var(--muted);font-weight:600}
+  .pday{font-family:'Bricolage Grotesque';font-weight:800;color:#1E8A3C;font-size:.92rem;margin:10px 2px 3px}
+  .pday.hot{color:#E4002B}
+  .pday .pdaynote{font-family:'Inter';font-weight:600;font-size:.72rem;color:var(--muted)}
   .camlink{display:block;background:#E1F0F5;color:#1c6b86;font-weight:700;font-size:.86rem;text-decoration:none;padding:11px 14px;border-radius:12px;border:1px solid #c7e3ec}
   .camlink:hover{filter:brightness(.97)}
 
@@ -323,6 +355,7 @@
     <button data-tab="dispo">Días</button>
     <button data-tab="votos">Votaciones</button>
     <button data-tab="costa">Costa</button>
+    <button data-tab="patrona" class="patronatab">Patrona</button>
   </nav>
 
   <!-- PLANES -->
@@ -413,6 +446,36 @@
     <div id="tides"></div>
     <p class="fineprint">Curva de marea de Suances con pleamares y bajamares (hora y altura reales, predicción armónica de Marea, ref. nivel medio del mar). Viento en km/h.</p>
   </section>
+
+  <section id="patrona">
+    <div class="phero">
+      <div class="pkicker">Fiestas de la Virgen Grande · Torrelavega</div>
+      <h2 class="ptitle">La Patrona</h2>
+      <div class="pdates">13 – 23 agosto 2026</div>
+    </div>
+
+    <div class="psat">
+      <h3>Nuestro sábado · 15 agosto</h3>
+      <p>El día que salimos todos. Imprescindibles: <b>Chico Blanco</b> a las 22:00 (Esc. Llama) y <b>Juanillo · DJ Laika</b> a las 00:30 en el Rincón Cubano (Cumpleaños Fidel).</p>
+    </div>
+
+    <h3 class="block-h">Hitos de la Patrona</h3>
+    <div id="hitos"></div>
+    <div class="hitoadd">
+      <input id="hitoInput" class="minput" placeholder="Añadir hito (ej: pincho de tortilla)" maxlength="80">
+      <button class="btn" onclick="addHito()">Añadir</button>
+    </div>
+
+    <h3 class="block-h">Patrona en las calles · sáb 15</h3>
+    <p class="psub">Conciertos por las calles (organizado por una peña, no es el programa oficial). Por horas:</p>
+    <div id="callesProg" class="prog"></div>
+
+    <h3 class="block-h">Rincón Cubano · 14–24 ago</h3>
+    <p class="psub">Programa del Granma. El sábado 15 vamos a ver a Juanillo.</p>
+    <div id="rinconProg" class="prog"></div>
+
+    <p class="fineprint">Programas según los carteles compartidos; pueden cambiar. Horarios orientativos.</p>
+  </section>
 </div>
 
 <div class="modal" id="iosHelp" style="display:none">
@@ -441,7 +504,7 @@
 const MONTHS=[[2026,5],[2026,6],[2026,7],[2026,8]];
 const MN=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 const DOW=['L','M','X','J','V','S','D'];
-let DATA={plans:[],availability:{},polls:[]};
+let DATA={plans:[],availability:{},polls:[],hitos:[]};
 let planFilter='pend';        // 'pend' | 'done'
 let mine=new Set();           // mis días seleccionados (sin guardar)
 const nameEl=document.getElementById('name');
@@ -471,7 +534,7 @@ async function load(){
   // mis días desde lo guardado
   const me=myName();
   mine=new Set(me&&DATA.availability[me]?DATA.availability[me]:[]);
-  renderPlans();renderCalendar();renderPolls();updateHint();
+  renderPlans();renderCalendar();renderPolls();renderHitos();updateHint();
 }
 // ¿hay un formulario de recuerdo a medias? (para no pisarlo en el auto-refresco)
 function memFormBusy(){
@@ -852,7 +915,73 @@ async function addPoll(){
 }
 async function delPoll(id){if(!confirm('¿Borrar la votación?'))return;try{await api(`/api/polls/${id}`,{method:'DELETE'});await load();}catch(e){toast(e.message);}}
 
+/* ---------- PATRONA ---------- */
+function renderHitos(){
+  const box=document.getElementById('hitos'); if(!box) return;
+  const hs=DATA.hitos||[];
+  if(!hs.length){ box.innerHTML='<p class="memempty">Aún no hay hitos. ¡Añade el primero! 👇</p>'; return; }
+  box.innerHTML=hs.map(h=>`<div class="hito${h.done?' done':''}">
+    <span class="hk" onclick="toggleHito(${h.id})">${h.done?'✓':''}</span>
+    <span class="ht">${esc(h.text)}</span>
+    ${h.done&&h.done_by?`<span class="hby">✓ ${esc(h.done_by)}</span>`:''}
+    <button class="hx" title="Borrar" onclick="delHito(${h.id})">✕</button>
+  </div>`).join('');
+}
+async function addHito(){
+  const el=document.getElementById('hitoInput'); const text=(el.value||'').trim();
+  if(!text) return toast('Escribe un hito');
+  try{ await api('/api/hitos',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})}); el.value=''; await load(); }
+  catch(e){ toast(e.message); }
+}
+async function toggleHito(id){
+  try{ const r=await api(`/api/hitos/${id}/done`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:myName()})}); await load(); if(r.done) celebrate(); }
+  catch(e){ toast(e.message); }
+}
+async function delHito(id){ if(!confirm('¿Borrar este hito?'))return; try{await api(`/api/hitos/${id}`,{method:'DELETE'});await load();}catch(e){toast(e.message);} }
+
+const CALLES=[
+  {t:'13:00',act:'Nepal Nepal',st:'Esc. Picas'},
+  {t:'14:00',act:'Kevin McCallister',st:'Esc. Picas'},
+  {t:'16:00',act:'DJ Concurso PELC 2026',st:'Esc. Julián Ceballos'},
+  {t:'17:00',act:'Bernal',st:'Esc. Llama'},
+  {t:'18:00',act:'McNulty',st:'Esc. Llama'},
+  {t:'18:00',act:'Daft Pando',st:'Esc. Julián Ceballos'},
+  {t:'18:00',act:'David Robles DJ',st:'Esc. Zona'},
+  {t:'18:30',act:'San Tosielo',st:'Esc. Llama'},
+  {t:'19:30',act:'McNulty',st:'Esc. Llama'},
+  {t:'20:00',act:'Perfecto Miserable',st:'Esc. Llama'},
+  {t:'20:00',act:'Artista Sorpresa',st:'Esc. Julián Ceballos'},
+  {t:'20:00',act:'DASAB',st:'Esc. Zona'},
+  {t:'21:00',act:'McNulty',st:'Esc. Llama'},
+  {t:'22:00',act:'Chico Blanco',st:'Esc. Llama',hot:true},
+  {t:'22:00',act:'McHardy',st:'Esc. Zona'},
+  {t:'23:00',act:'McNulty',st:'Esc. Llama'},
+];
+const RINCON=[
+  {d:'Vie 14',note:'Chupinazo y Tribuna',items:[['21:30','King Size Co.'],['00:00','DJ Sara Puaj']]},
+  {d:'Sáb 15',note:'Cumpleaños Fidel · nuestro día',hot:true,items:[['22:00','SHÖCK'],['00:30','DJ Laika (Juanillo)']]},
+  {d:'Dom 16',items:[['21:00','Piedras Negras'],['23:00','DJ Skansteady']]},
+  {d:'Lun 17',note:'Día del Sáhara',items:[['21:00','Los Castos'],['23:30','DJ Kevin McIlyter']]},
+  {d:'Mar 18',note:'Día de la Mujer Revolucionaria',items:[['20:30','Celita'],['22:00','False Pretense'],['23:30','DJ Piloshka']]},
+  {d:'Mié 19',note:'Día de Cantabria · juegos tradicionales',items:[['21:30','Ramón Bueno y Banda'],['23:30','DJ Tavuko']]},
+  {d:'Jue 20',items:[['19:00','DJuly Sound System'],['21:00','Smooth Beans'],['23:00','DJuly Sound System']]},
+  {d:'Vie 21',note:'Día de Palestina',items:[['21:00','Snatzer'],['22:15','Motherless'],['00:00','DJ Sabrosón']]},
+  {d:'Sáb 22',note:'Fiesta Guajira',items:[['21:00','Lazarón y Amigos'],['00:30','Muffment']]},
+  {d:'Dom 23',items:[['21:00','722']]},
+  {d:'Lun 24',note:'Día del Pionero/a',items:[]},
+];
+function renderPatrona(){
+  const c=document.getElementById('callesProg');
+  if(c) c.innerHTML=CALLES.map(r=>`<div class="prow${r.hot?' hot':''}"><span class="ptime">${r.t}</span><span class="pact">${esc(r.act)}<span class="pstage">${esc(r.st)}</span></span></div>`).join('');
+  const r=document.getElementById('rinconProg');
+  if(r) r.innerHTML=RINCON.map(day=>{
+    const rows=day.items.map(([t,a])=>`<div class="prow${day.hot?' hot':''}"><span class="ptime">${t}</span><span class="pact">${esc(a)}</span></div>`).join('');
+    return `<div class="pday${day.hot?' hot':''}">${esc(day.d)}${day.note?` <span class="pdaynote">· ${esc(day.note)}</span>`:''}</div>${rows}`;
+  }).join('');
+}
+
 updateHint();
+renderPatrona();
 load();
 setInterval(()=>{ if(!memFormBusy()) load(); },20000); // refresco suave (no pisa formularios a medias)
 
