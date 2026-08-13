@@ -24,22 +24,24 @@
   *{box-sizing:border-box}
   body{
     margin:0;font-family:'Inter',system-ui,sans-serif;color:var(--ink);line-height:1.5;
-    background:radial-gradient(120% 70% at 100% -5%,rgba(31,158,150,.16),transparent 55%),var(--sand);
+    background:radial-gradient(120% 70% at 100% -5%,rgba(244,196,0,.28),transparent 55%),radial-gradient(120% 60% at 0% 0%,rgba(228,0,43,.10),transparent 50%),#FCF4DB;
     background-attachment:fixed;-webkit-text-size-adjust:100%;padding-bottom:40px
   }
   .wrap{max-width:760px;margin:0 auto;padding:0 16px}
 
   /* header */
   header{
-    background:linear-gradient(155deg,#0B3E45,#0E5A5C 60%,#1F9E96);color:#fff;
-    border-radius:0 0 26px 26px;padding:calc(26px + env(safe-area-inset-top,0px)) 20px 22px;position:relative;overflow:hidden
+    background:#F4C400;color:#0B3E45;
+    border-radius:0 0 22px 22px;padding:env(safe-area-inset-top,0px) 0 16px;position:relative;overflow:hidden
   }
+  .hbanner{width:100%;display:block}
+  .hkick{color:#0B3E45;font-weight:800;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;text-align:center;opacity:.85;padding:12px 16px 0}
   header .sun{position:absolute;top:-50px;right:-30px;width:170px;height:170px;border-radius:50%;
     background:radial-gradient(circle,#FFD46B,#F6B53C 60%,transparent 72%);opacity:.85}
-  .kick{font-size:.72rem;font-weight:700;letter-spacing:.26em;text-transform:uppercase;color:#9BE7DF;position:relative}
+  .kick{font-size:.72rem;font-weight:700;letter-spacing:.26em;text-transform:uppercase;color:#FFE1A6;position:relative}
   h1{font-family:'Bricolage Grotesque';font-weight:800;font-size:clamp(2rem,8vw,2.8rem);line-height:.92;margin:6px 0 0;position:relative}
-  h1 em{font-style:normal;color:#F6B53C}
-  .who{display:flex;gap:8px;align-items:center;margin-top:16px;position:relative}
+  h1 em{font-style:normal;color:#FFDE59}
+  .who{display:flex;gap:8px;align-items:center;padding:10px 16px 0;position:relative}
   .who input,.who select{
     flex:1;border:none;border-radius:12px;padding:11px 13px;font-family:'Inter';font-size:.95rem;
     background:rgba(255,255,255,.95);color:var(--ink);min-width:0
@@ -50,7 +52,7 @@
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%230B3E45' stroke-width='1.7' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
     background-repeat:no-repeat;background-position:right 13px center
   }
-  .who span{font-size:.78rem;color:#BFE9E4;white-space:nowrap}
+  .who span{font-size:.78rem;color:#0B3E45;white-space:nowrap;font-weight:600}
 
   /* tabs */
   nav.tabs{display:flex;gap:5px;background:var(--card);border:1px solid var(--line);border-radius:14px;
@@ -59,9 +61,9 @@
     flex:1;border:none;background:transparent;font-family:'Inter';font-weight:700;font-size:.78rem;
     color:var(--muted);padding:10px 2px;border-radius:10px;cursor:pointer;white-space:nowrap
   }
-  nav.tabs button.active{background:var(--sea);color:#fff}
+  nav.tabs button.active{background:#C8102E;color:#fff}
   nav.tabs button.patronatab{color:#C8102E}
-  nav.tabs button.patronatab.active{background:linear-gradient(90deg,#E4002B,#F4C400);color:#fff}
+  nav.tabs button.patronatab.active{background:linear-gradient(90deg,#1E8A3C,#F4C400);color:#fff}
 
   section{display:none}
   section.active{display:block;animation:fade .25s ease}
@@ -78,6 +80,9 @@
   .camcap{font-size:.78rem;color:var(--muted);font-weight:600;margin-top:5px}
 
   /* --- Patrona --- */
+  .cartel{width:100%;display:block;border-radius:16px;border:1px solid var(--line);box-shadow:0 8px 26px -16px rgba(0,0,0,.45);margin-bottom:12px}
+  .progoficial{display:block;text-align:center;background:#1E8A3C;color:#fff;font-weight:800;text-decoration:none;padding:12px;border-radius:12px;margin-bottom:18px}
+  .progoficial:hover{filter:brightness(1.05)}
   .phero{background:#F4C400;border-radius:18px;padding:22px 18px;text-align:center;margin-bottom:16px}
   .pkicker{font-weight:800;font-size:.7rem;letter-spacing:1px;text-transform:uppercase;color:#1E8A3C}
   .ptitle{font-family:'Bricolage Grotesque';font-weight:800;font-size:2.5rem;line-height:.95;color:#E4002B;margin:5px 0 6px}
@@ -321,10 +326,9 @@
 </head>
 <body>
 <header>
-  <div class="sun"></div>
   <div class="wrap" style="padding:0">
-    <div class="kick">Cantabria · PATATUQUENS</div>
-    <h1>Plan de verano <em>'26</em></h1>
+    <img class="hbanner" src="/patrona/portada.jpg" alt="La Patrona 2026 · Fiestas de la Virgen Grande · 13/23 Agosto · Torrelavega">
+    <div class="hkick">PATATUQUENS · plan de verano '26</div>
     <div class="who">
       <select id="name" autocomplete="off">
         <option value="" disabled selected>Elige tu nombre</option>
@@ -351,15 +355,15 @@
     <button class="x" id="installX" aria-label="Cerrar">✕</button>
   </div>
   <nav class="tabs">
-    <button data-tab="planes" class="active">Planes</button>
+    <button data-tab="patrona" class="patronatab active">Patrona</button>
+    <button data-tab="planes">Planes</button>
     <button data-tab="dispo">Días</button>
     <button data-tab="votos">Votaciones</button>
     <button data-tab="costa">Costa</button>
-    <button data-tab="patrona" class="patronatab">Patrona</button>
   </nav>
 
   <!-- PLANES -->
-  <section id="planes" class="active">
+  <section id="planes">
     <h2 class="sec-title">Los planes</h2>
     <p class="sec-sub">Apúntate a los que quieras. Cualquiera puede proponer uno nuevo.</p>
     <div class="segtabs">
@@ -447,12 +451,9 @@
     <p class="fineprint">Curva de marea de Suances con pleamares y bajamares (hora y altura reales, predicción armónica de Marea, ref. nivel medio del mar). Viento en km/h.</p>
   </section>
 
-  <section id="patrona">
-    <div class="phero">
-      <div class="pkicker">Fiestas de la Virgen Grande · Torrelavega</div>
-      <h2 class="ptitle">La Patrona</h2>
-      <div class="pdates">13 – 23 agosto 2026</div>
-    </div>
+  <section id="patrona" class="active">
+    <img class="cartel" src="/patrona/oficial.jpg" alt="Cartel oficial La Patrona 2026 · Fiestas de la Virgen Grande">
+    <a class="progoficial" href="https://eventosdecantabria.es/event/fiestas-de-la-virgen-grande-en-torrelavega-2026-programa-completo/" target="_blank" rel="noopener">📋 Programa oficial completo →</a>
 
     <div class="psat">
       <h3>Nuestro sábado · 15 agosto</h3>
@@ -467,14 +468,14 @@
     </div>
 
     <h3 class="block-h">Patrona en las calles · sáb 15</h3>
-    <p class="psub">Conciertos por las calles (organizado por una peña, no es el programa oficial). Por horas:</p>
-    <div id="callesProg" class="prog"></div>
+    <p class="psub">Conciertos por las calles (organizado por una peña, no es el programa oficial).</p>
+    <img class="cartel" src="/patrona/calles.jpg" alt="Cartel Patrona en las calles · 15 agosto 2026">
 
     <h3 class="block-h">Rincón Cubano · 14–24 ago</h3>
-    <p class="psub">Programa del Granma. El sábado 15 vamos a ver a Juanillo.</p>
-    <div id="rinconProg" class="prog"></div>
+    <p class="psub">Programa del Granma. El sábado 15 vamos a ver a Juanillo (DJ Laika).</p>
+    <img class="cartel" src="/patrona/rincon.jpg" alt="Programa Rincón Cubano Granma">
 
-    <p class="fineprint">Programas según los carteles compartidos; pueden cambiar. Horarios orientativos.</p>
+    <p class="fineprint">Carteles compartidos por la organización; horarios orientativos, pueden cambiar.</p>
   </section>
 </div>
 
@@ -939,49 +940,7 @@ async function toggleHito(id){
 }
 async function delHito(id){ if(!confirm('¿Borrar este hito?'))return; try{await api(`/api/hitos/${id}`,{method:'DELETE'});await load();}catch(e){toast(e.message);} }
 
-const CALLES=[
-  {t:'13:00',act:'Nepal Nepal',st:'Esc. Picas'},
-  {t:'14:00',act:'Kevin McCallister',st:'Esc. Picas'},
-  {t:'16:00',act:'DJ Concurso PELC 2026',st:'Esc. Julián Ceballos'},
-  {t:'17:00',act:'Bernal',st:'Esc. Llama'},
-  {t:'18:00',act:'McNulty',st:'Esc. Llama'},
-  {t:'18:00',act:'Daft Pando',st:'Esc. Julián Ceballos'},
-  {t:'18:00',act:'David Robles DJ',st:'Esc. Zona'},
-  {t:'18:30',act:'San Tosielo',st:'Esc. Llama'},
-  {t:'19:30',act:'McNulty',st:'Esc. Llama'},
-  {t:'20:00',act:'Perfecto Miserable',st:'Esc. Llama'},
-  {t:'20:00',act:'Artista Sorpresa',st:'Esc. Julián Ceballos'},
-  {t:'20:00',act:'DASAB',st:'Esc. Zona'},
-  {t:'21:00',act:'McNulty',st:'Esc. Llama'},
-  {t:'22:00',act:'Chico Blanco',st:'Esc. Llama',hot:true},
-  {t:'22:00',act:'McHardy',st:'Esc. Zona'},
-  {t:'23:00',act:'McNulty',st:'Esc. Llama'},
-];
-const RINCON=[
-  {d:'Vie 14',note:'Chupinazo y Tribuna',items:[['21:30','King Size Co.'],['00:00','DJ Sara Puaj']]},
-  {d:'Sáb 15',note:'Cumpleaños Fidel · nuestro día',hot:true,items:[['22:00','SHÖCK'],['00:30','DJ Laika (Juanillo)']]},
-  {d:'Dom 16',items:[['21:00','Piedras Negras'],['23:00','DJ Skansteady']]},
-  {d:'Lun 17',note:'Día del Sáhara',items:[['21:00','Los Castos'],['23:30','DJ Kevin McIlyter']]},
-  {d:'Mar 18',note:'Día de la Mujer Revolucionaria',items:[['20:30','Celita'],['22:00','False Pretense'],['23:30','DJ Piloshka']]},
-  {d:'Mié 19',note:'Día de Cantabria · juegos tradicionales',items:[['21:30','Ramón Bueno y Banda'],['23:30','DJ Tavuko']]},
-  {d:'Jue 20',items:[['19:00','DJuly Sound System'],['21:00','Smooth Beans'],['23:00','DJuly Sound System']]},
-  {d:'Vie 21',note:'Día de Palestina',items:[['21:00','Snatzer'],['22:15','Motherless'],['00:00','DJ Sabrosón']]},
-  {d:'Sáb 22',note:'Fiesta Guajira',items:[['21:00','Lazarón y Amigos'],['00:30','Muffment']]},
-  {d:'Dom 23',items:[['21:00','722']]},
-  {d:'Lun 24',note:'Día del Pionero/a',items:[]},
-];
-function renderPatrona(){
-  const c=document.getElementById('callesProg');
-  if(c) c.innerHTML=CALLES.map(r=>`<div class="prow${r.hot?' hot':''}"><span class="ptime">${r.t}</span><span class="pact">${esc(r.act)}<span class="pstage">${esc(r.st)}</span></span></div>`).join('');
-  const r=document.getElementById('rinconProg');
-  if(r) r.innerHTML=RINCON.map(day=>{
-    const rows=day.items.map(([t,a])=>`<div class="prow${day.hot?' hot':''}"><span class="ptime">${t}</span><span class="pact">${esc(a)}</span></div>`).join('');
-    return `<div class="pday${day.hot?' hot':''}">${esc(day.d)}${day.note?` <span class="pdaynote">· ${esc(day.note)}</span>`:''}</div>${rows}`;
-  }).join('');
-}
-
 updateHint();
-renderPatrona();
 load();
 setInterval(()=>{ if(!memFormBusy()) load(); },20000); // refresco suave (no pisa formularios a medias)
 
